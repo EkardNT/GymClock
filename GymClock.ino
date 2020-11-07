@@ -50,6 +50,7 @@ TestProgramCo testProgramCo;
 InitProgramCo initProgramCo;
 ClockProgramCo clockProgramCo;
 CountdownCo countdownCo;
+StopwatchProgram stopwatchProgram;
 
 BasicZoneManager<ZONE_MGR_CACHE_SIZE> zoneManager(
     zonedb::kZoneRegistrySize, zonedb::kZoneRegistry);
@@ -105,6 +106,7 @@ void setup() {
   testProgramCo.setupCoroutine(F("testProgramCo"));
   clockProgramCo.setupCoroutine(F("clockProgramCo"));
   countdownCo.setupCoroutine(F("countdownCo"));
+  stopwatchProgram.setupCoroutine(F("stopwatch"));
   CoroutineScheduler::setup();
 
   Serial.println("Listing coroutines after setup");
@@ -168,6 +170,8 @@ void networkInit(const WiFiEventStationModeGotIP& event) {
   userServer.on("/changeProgram/test", HTTP_POST, serveUserChangeProgramTestSubmit);
   userServer.on("/changeProgram/countdown", HTTP_GET, serveUserChangeProgramCountdown);
   userServer.on("/changeProgram/countdown", HTTP_POST, serveUserChangeProgramCountdownSubmit);
+  userServer.on("/changeProgram/stopwatch", HTTP_GET, serveUserChangeProgramStopwatch);
+  userServer.on("/changeProgram/stopwatch", HTTP_POST, serveUserChangeProgramStopwatchSubmit);
   userServer.begin();
 
   httpUpdateServer.setup(&webUpdateServer);
@@ -486,6 +490,10 @@ void serveUserIndex() {
       break;
     case PROGRAM_COUNTDOWN:
       body.replace(F("$CURRENT_PROGRAM"), F("Countdown"));
+      break;
+    case PROGRAM_STOPWATCH:
+      body.replace(F("$CURRENT_PROGRAM"), F("Stopwatch"));
+      break;
     default:
       body.replace(F("$CURRENT_PROGRAM"), F("Unknown"));
   }
@@ -750,6 +758,63 @@ void serveUserChangeProgramCountdownSubmit() {
         <body>\
             <nav><h1>Success</h1></nav>\
             <p><strong>Countdown</strong> program activated. Returning to main menu.</p>\
+        </body>\
+    </html>"));
+  userServer.send(200, F("text/html"), body);
+}
+
+void serveUserChangeProgramStopwatch() {
+  WiFiClient client = userServer.client();
+  String body = "";
+  body.reserve(2048);
+  body.concat(F("\
+    <html>\
+        <head>\
+            <title>GymClock</title>\
+            <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+            <style>\
+                nav {\
+                    background-color: black;\
+                    color: white;\
+                }\
+                form > * {\
+                    display: block;\
+                }\
+            </style>\
+        </head>\
+        <body>\
+            <nav><h1>Activate Stopwatch</h1></nav>\
+            <div><a href='/changeProgram'>Back</a></div>\
+            <form method='post' action=''>\
+                <input type='submit' value='Activate'>\
+            </form>\
+        </body>\
+    </html>"));
+  userServer.send(200, F("text/html"), body);
+}
+
+void serveUserChangeProgramStopwatchSubmit() {
+  changeProgram(PROGRAM_STOPWATCH);
+
+  WiFiClient client = userServer.client();
+  String body = "";
+  body.reserve(2048);
+  body.concat(F("\
+      <html>\
+        <head>\
+            <title>GymClock</title>\
+            <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+            <meta http-equiv='refresh' content='3;url=/'>\
+            <style>\
+                nav {\
+                    background-color: green;\
+                    color: white;\
+                }\
+            </style>\
+        </head>\
+        <body>\
+            <nav><h1>Success</h1></nav>\
+            <p><strong>Stopwatch</strong> program activated. Returning to main menu.</p>\
         </body>\
     </html>"));
   userServer.send(200, F("text/html"), body);

@@ -7,6 +7,7 @@ const int PROGRAM_INIT = 0;
 const int PROGRAM_TEST = 1;
 const int PROGRAM_CLOCK = 2;
 const int PROGRAM_COUNTDOWN = 3;
+const int PROGRAM_STOPWATCH = 4;
 
 int currentProgram();
 void changeProgram(int newProgram);
@@ -47,9 +48,19 @@ class CountdownCo : public ace_routine::Coroutine {
         unsigned long ageMillis = 0;
 };
 
+class StopwatchProgram : public ace_routine::Coroutine {
+    public:
+        StopwatchProgram() {}
+        int runCoroutine() override;
+
+    private:
+        unsigned long startMillis = 0;
+};
+
 extern TestProgramCo testProgramCo;
 extern InitProgramCo initProgramCo;
 extern ClockProgramCo clockProgramCo;
 extern CountdownCo countdownCo;
+extern StopwatchProgram stopwatchProgram;
 
 #endif

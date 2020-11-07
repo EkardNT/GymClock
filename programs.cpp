@@ -45,6 +45,11 @@ void changeProgram(int newProgram) {
                 countdownCo.resume();
             }
             break;
+        case PROGRAM_STOPWATCH:
+            stopwatchProgram.reset();
+            if (stopwatchProgram.isSuspended()) {
+                stopwatchProgram.resume();
+            }
         default:
             Serial.println("ERROR: cannot change to unknown program!");
     }
@@ -62,6 +67,9 @@ void suspendAll(int exceptProgram) {
     }
     if (exceptProgram != PROGRAM_COUNTDOWN) {
         countdownCo.suspend();
+    }
+    if (exceptProgram != PROGRAM_STOPWATCH) {
+        stopwatchProgram.suspend();
     }
 }
 
@@ -314,6 +322,47 @@ int CountdownCo::runCoroutine() {
         COROUTINE_DELAY(1000);
         clearDisplay();
         COROUTINE_DELAY(750);
+    }
+
+    COROUTINE_END();
+}
+
+int StopwatchProgram::runCoroutine() {
+    COROUTINE_BEGIN();
+
+    clearDisplay();
+    this->startMillis = millis();
+
+    while (true) {
+        unsigned long now = millis();
+        unsigned long age = now > startMillis ? now - startMillis : 0;
+        unsigned long hoursPart = age / MILLIS_PER_HOUR;
+        age -= hoursPart * MILLIS_PER_HOUR;
+        unsigned long minutesPart = age / MILLIS_PER_MINUTE;
+        age -= minutesPart * MILLIS_PER_MINUTE;
+        unsigned long secondsPart = age / MILLIS_PER_SECOND;
+        age -= secondsPart * MILLIS_PER_SECOND;
+        unsigned long decisecondsPart = age / 10;
+
+        // Loop around once we exceed 99 hours.
+        if (hoursPart > 99) {
+            this->startMillis = millis();
+            continue;
+        }
+
+        // If the stopwatch has recorded over an hour, then show HH:MM:SS, otherwise show
+        // MM:SS:DS.
+        if (hoursPart > 0) {
+            show2DigitNumber(hoursPart, 0);
+            show2DigitNumber(minutesPart, 2);
+            show2DigitNumber(secondsPart, 4);
+            COROUTINE_DELAY(250);
+        } else {
+            show2DigitNumber(minutesPart, 0);
+            show2DigitNumber(secondsPart, 2);
+            show2DigitNumber(decisecondsPart, 4);
+            COROUTINE_DELAY(75);
+        }
     }
 
     COROUTINE_END();
