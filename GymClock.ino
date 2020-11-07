@@ -786,6 +786,12 @@ void serveUserChangeProgramStopwatch() {
             <nav><h1>Activate Stopwatch</h1></nav>\
             <div><a href='/changeProgram'>Back</a></div>\
             <form method='post' action=''>\
+                <div>\
+                    Beep Interval (leave 0 to disable)\
+                    <label>Hours <input type='number' name='beepIntervalHours' value='0' min='0' max='99' required></label>\
+                    <label>Minutes <input type='number' name='beepIntervalMinutes' value='0' min='0' max='60' required></label>\
+                    <label>Seconds <input type='number' name='beepIntervalSeconds' value='0' min='0' max='60' required></label>\
+                </div>\
                 <input type='submit' value='Activate'>\
             </form>\
         </body>\
@@ -794,6 +800,18 @@ void serveUserChangeProgramStopwatch() {
 }
 
 void serveUserChangeProgramStopwatchSubmit() {
+  unsigned long beepIntervalHours = userServer.arg(F("beepIntervalHours")).toInt();
+  beepIntervalHours = constrain(beepIntervalHours, 0, 99);
+  unsigned long beepIntervalMinutes = userServer.arg(F("beepIntervalMinutes")).toInt();
+  beepIntervalMinutes = constrain(beepIntervalMinutes, 0, 60);
+  unsigned long beepIntervalSeconds = userServer.arg(F("beepIntervalSeconds")).toInt();
+  beepIntervalSeconds = constrain(beepIntervalSeconds, 0, 60);
+
+  unsigned long beepIntervalMillis = beepIntervalHours * MILLIS_PER_HOUR
+    + beepIntervalMinutes * MILLIS_PER_MINUTE
+    + beepIntervalSeconds * MILLIS_PER_SECOND;
+
+  stopwatchProgram.beepIntervalMillis = beepIntervalMillis;
   changeProgram(PROGRAM_STOPWATCH);
 
   WiFiClient client = userServer.client();

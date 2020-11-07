@@ -331,11 +331,14 @@ int StopwatchProgram::runCoroutine() {
     COROUTINE_BEGIN();
 
     clearDisplay();
-    this->startMillis = millis();
+
+    unsigned long now = millis();
+    this->startMillis = now;
+    this->lastBeepTimeMillis = now;
 
     while (true) {
-        unsigned long now = millis();
-        unsigned long age = now > startMillis ? now - startMillis : 0;
+        now = millis();
+        unsigned long age = now > this->startMillis ? now - this->startMillis : 0;
         unsigned long hoursPart = age / MILLIS_PER_HOUR;
         age -= hoursPart * MILLIS_PER_HOUR;
         unsigned long minutesPart = age / MILLIS_PER_MINUTE;
@@ -348,6 +351,14 @@ int StopwatchProgram::runCoroutine() {
         if (hoursPart > 99) {
             this->startMillis = millis();
             continue;
+        }
+
+        // beepIntervalMillis == 0 disables the beep functionality.
+        if (this->beepIntervalMillis > 0) {
+            unsigned long millisSinceLastBeep = now > this->lastBeepTimeMillis ? now - this->lastBeepTimeMillis : 0;
+            if (millisSinceLastBeep > this->beepIntervalMillis) {
+                // TODO: play beep sound
+            }
         }
 
         // If the stopwatch has recorded over an hour, then show HH:MM:SS, otherwise show

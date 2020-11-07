@@ -53,8 +53,11 @@ class StopwatchProgram : public ace_routine::Coroutine {
         StopwatchProgram() {}
         int runCoroutine() override;
 
+        unsigned long beepIntervalMillis = 0;
+
     private:
         unsigned long startMillis = 0;
+        unsigned long lastBeepTimeMillis = 0;
 };
 
 extern TestProgramCo testProgramCo;
