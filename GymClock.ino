@@ -11,9 +11,6 @@
 
 using namespace ace_time;
 
-
-//const char WIFI_SSID[] = "SBG6900AC-D0794";
-//const char WIFI_PASSWORD[] = "c63a874983";
 const char AP_SSID[] = "GymClockAdmin";
 const char AP_PASSWORD[] = "password";
 const IPAddress AP_LOCAL_IP(192, 168, 4, 22);
