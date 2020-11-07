@@ -46,48 +46,6 @@ char wifiPassword[MAX_PASSWORD_SIZE + 1] = {0};
 
 byte displayState[NUM_DIGITS] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
-struct InitProgram {
-  void onBegin(unsigned long now);
-  void onEnd();
-  unsigned long update(unsigned long now);
-
-  unsigned long startTime = 0;
-};
-struct TestProgram {
-  void onBegin(unsigned long now);
-  void onEnd();
-  unsigned long update(unsigned long now);
-
-  unsigned long startTime = 0;
-};
-struct ClockProgram {
-  void onBegin(unsigned long now);
-  void onEnd();
-  unsigned long update(unsigned long now);
-
-  bool format24 = false;
-};
-struct StopwatchProgram {
-  void onBegin(unsigned long now);
-  void onEnd();
-  unsigned long update(unsigned long now);
-};
-
-InitProgram initProgram;
-TestProgram testProgram;
-ClockProgram clockProgram;
-StopwatchProgram stopwatchProgram;
-
-const int PROGRAM_INIT = 0;
-const int PROGRAM_TEST = 1;
-const int PROGRAM_CLOCK = 2;
-const int PROGRAM_STOPWATCH = 3;
-// Initialize previousProgram to an invalid program so that the first program's onBegin() is called.
-int previousProgram = -1;
-int currentProgram = PROGRAM_TEST;
-unsigned long programNextUpdateTimeMillis = 0;
-int programUpdateTick = 0;
-
 TestProgramCo testProgramCo;
 InitProgramCo initProgramCo;
 ClockProgramCo clockProgramCo;
@@ -152,9 +110,11 @@ void setup() {
   Serial.println("Listing coroutines after setup");
   CoroutineScheduler::list(Serial);
 
-  // Suspend everything but the init program.
-  // WARNING: AceRoutine seems to have a bug if you suspend then resume here.
-  suspendAll(&initProgramCo);
+  // Suspend everything but the init program. Ideally we would call changeProgram(PROGRAM_INIT)
+  // here instead of suspendAll, but that causes a crash reboot loop because AceRoutine has
+  // some bug where the scheduler's linked list gets messed up if you make some combination
+  // of suspend/resume calls here.
+  suspendAll(PROGRAM_INIT);
 
   Serial.println("Listing coroutines after suspending initial");
   CoroutineScheduler::list(Serial);
@@ -178,13 +138,6 @@ void loop() {
   renderDisplay();
 
   CoroutineScheduler::loop();
-
-//  if (programUpdateTick == 64) {
-//    updateProgram();
-//    programUpdateTick = 0;
-//  } else {
-//    programUpdateTick += 1;
-//  }
 }
 
 void initStoredSettings() {
@@ -520,7 +473,7 @@ void serveUserIndex() {
             </div>\
         </body>\
     </html>"));
-  switch (currentProgram) {
+  switch (currentProgram()) {
     case PROGRAM_INIT:
       body.replace(F("$CURRENT_PROGRAM"), F("Init"));
       break;
@@ -530,9 +483,8 @@ void serveUserIndex() {
     case PROGRAM_CLOCK:
       body.replace(F("$CURRENT_PROGRAM"), F("Clock"));
       break;
-    case PROGRAM_STOPWATCH:
-      body.replace(F("$CURRENT_PROGRAM"), F("Stopwatch"));
-      break;
+    default:
+      body.replace(F("$CURRENT_PROGRAM"), F("Unknown"));
   }
   userServer.send(200, F("text/html"), body);
 }
@@ -608,7 +560,8 @@ void serveUserChangeProgramClock() {
 
 void serveUserChangeProgramClockSubmit() {
   String newTimezoneId = userServer.arg(F("timezoneId"));
-  clockProgram.format24 = userServer.hasArg(F("format24"));
+  clockProgramCo.format24 = userServer.hasArg(F("format24"));
+
   changeProgram(PROGRAM_CLOCK);
 
   WiFiClient client = userServer.client();
@@ -735,192 +688,4 @@ void updateWiFiSettings(String newSSID, String newPassword) {
     Serial.println("Beginning WiFi.");
     WiFi.begin(wifiSSID, wifiPassword);
   }
-}
-
-void changeProgram(int newProgram) {
-  previousProgram = currentProgram;
-  currentProgram = newProgram;
-  programNextUpdateTimeMillis = 0;
-}
-
-void updateProgram() {
-  unsigned long nowMillis = millis();
-  if (currentProgram != previousProgram) {
-    switch (previousProgram) {
-      case PROGRAM_INIT:
-        initProgram.onEnd();
-        break;
-      case PROGRAM_TEST:
-        testProgram.onEnd();
-        break;
-      case PROGRAM_CLOCK:
-        clockProgram.onEnd();
-        break;
-      case PROGRAM_STOPWATCH:
-        stopwatchProgram.onEnd();
-        break;
-      default:
-        // This is normal on startup.
-        break;
-    }
-    switch (currentProgram) {
-      case PROGRAM_INIT:
-        initProgram.onBegin(nowMillis);
-        break;
-      case PROGRAM_TEST:
-        testProgram.onBegin(nowMillis);
-        break;
-      case PROGRAM_CLOCK:
-        clockProgram.onBegin(nowMillis);
-        break;
-      case PROGRAM_STOPWATCH:
-        stopwatchProgram.onBegin(nowMillis);
-        break;
-      default:
-        Serial.println("Invalid current program!");
-        break;
-    }
-    previousProgram = currentProgram;
-  }
-  if (nowMillis >= programNextUpdateTimeMillis) {
-    switch (currentProgram) {
-      case PROGRAM_INIT:
-        programNextUpdateTimeMillis = initProgram.update(nowMillis);
-        break;
-      case PROGRAM_TEST:
-        programNextUpdateTimeMillis = testProgram.update(nowMillis);
-        break;
-      case PROGRAM_CLOCK:
-        programNextUpdateTimeMillis = clockProgram.update(nowMillis);
-        break;
-      case PROGRAM_STOPWATCH:
-        programNextUpdateTimeMillis = stopwatchProgram.update(nowMillis);
-        break;
-      default:
-        Serial.println("Invalid current program!");
-        break;
-    }
-  }
-}
-
-void InitProgram::onBegin(unsigned long now) {
-  this->startTime = now;
-  Serial.println(F("InitProgram::onBegin()"));
-}
-
-void InitProgram::onEnd() {
-  Serial.println(F("InitProgram::onEnd()"));
-}
-
-unsigned long InitProgram::update(unsigned long now) {
-  Serial.println(F("InitProgram::update()"));
-  unsigned long age = now - this->startTime;
-  clearDisplay();
-  if (age < 5000) {
-    updateDigit(0, 'H', false);
-    updateDigit(1, 'E', false);
-    updateDigit(2, 'L', false);
-    updateDigit(3, 'L', false);
-    updateDigit(4, 'O', false);
-  } else {
-    if (networkActive) {
-      updateDigit(0, 'N', false);
-      updateDigit(1, 'E', false);
-      updateDigit(2, 'T', false);
-      updateDigit(4, 'O', false);
-      updateDigit(5, 'N', false);
-    } else {
-      updateDigit(0, 'N', false);
-      updateDigit(1, 'O', false);
-      updateDigit(3, 'N', false);
-      updateDigit(4, 'E', false);
-      updateDigit(5, 'T', false);
-    }
-  }
-  return now + 1000;
-}
-
-void TestProgram::onBegin(unsigned long now) {
-  this->startTime = now;
-  Serial.println(F("TestProgram::onBegin()"));
-}
-
-void TestProgram::onEnd() {
-  Serial.println(F("TestProgram::onEnd()"));
-}
-
-unsigned long TestProgram::update(unsigned long now) {
-  const int PERIOD = 3000;
-  unsigned long age = now - this->startTime;
-  if (age / PERIOD % 3 == 0) {
-    for (int i = 0; i < NUM_DIGITS; i++) {
-      updateDigit(i, ' ', false);
-    }
-    updateDigit(1, 'T', false);
-    updateDigit(2, 'E', false);
-    updateDigit(3, 'S', false);
-    updateDigit(4, 'T', false);
-  } else if (age / PERIOD % 3 == 1) {
-    for (int i = 0; i < NUM_DIGITS; i++) {
-      updateDigit(i, '0' + i, false);
-    }
-  } else {
-    for (int i = 0; i < NUM_DIGITS; i++) {
-      updateDigit(i, '8', false);
-    }
-  }
-  return now + PERIOD;
-}
-
-void ClockProgram::onBegin(unsigned long now) {
-  Serial.println(F("ClockProgram::onBegin()"));
-  clearDisplay();
-}
-
-void ClockProgram::onEnd() {
-  Serial.println(F("ClockProgram::onEnd()"));
-}
-
-unsigned long ClockProgram::update(unsigned long now) {
-  if (!networkActive) {
-    clearDisplay();
-    updateDigit(0, 'N', false);
-    updateDigit(1, 'O', false);
-    updateDigit(3, 'N', false);
-    updateDigit(4, 'E', false);
-    updateDigit(5, 'T', false);
-    return now + 2000;
-  }
-
-  unsigned long unixEpochSeconds = timeClient.getEpochTime();
-  TimeZone localTz = zoneManager.createForZoneInfo(&zonedb::kZoneAmerica_Los_Angeles);
-  ZonedDateTime localTime = ZonedDateTime::forUnixSeconds(unixEpochSeconds, localTz);
-
-  uint8_t hour = localTime.hour();
-
-  if (hour > 12 && !this->format24) {
-    hour -= 12;
-  }
-
-  clearDisplay();
-  show2DigitNumber(hour, 0);
-  show2DigitNumber(localTime.minute(), 2);
-  show2DigitNumber(localTime.second(), 4);
-  show2DigitNumber(localTime.month(), 6);
-  show2DigitNumber(localTime.day(), 8);
-
-  return now + 250;
-}
-
-void StopwatchProgram::onBegin(unsigned long now) {
-  Serial.println(F("StopwatchProgram::onBegin()"));
-}
-
-void StopwatchProgram::onEnd() {
-  Serial.println(F("StopwatchProgram::onEnd()"));
-}
-
-unsigned long StopwatchProgram::update(unsigned long now) {
-  Serial.println(F("StopwatchProgram::update()"));
-  return now + 10000;
 }

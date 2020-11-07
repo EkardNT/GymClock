@@ -3,7 +3,13 @@
 
 #include <AceRoutine.h>
 
-void suspendAll(ace_routine::Coroutine *except);
+const int PROGRAM_INIT = 0;
+const int PROGRAM_TEST = 1;
+const int PROGRAM_CLOCK = 2;
+
+int currentProgram();
+void changeProgram(int newProgram);
+void suspendAll(int exceptProgram);
 
 class TestProgramCo : public ace_routine::Coroutine {
     public:

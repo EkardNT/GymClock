@@ -11,14 +11,45 @@ const int NOTE_G4 = 392;
 
 extern NTPClient timeClient;
 
-void suspendAll(ace_routine::Coroutine *except) {
-    if (&initProgramCo != except) {
+int currProgram = PROGRAM_INIT;
+
+int currentProgram() {
+    return currProgram;
+}
+
+void changeProgram(int newProgram) {
+    currProgram = newProgram;
+    suspendAll(newProgram);
+    switch (newProgram) {
+        case PROGRAM_INIT:
+            initProgramCo.reset();
+            if (initProgramCo.isSuspended()) {
+                initProgramCo.resume();
+            }
+            break;
+        case PROGRAM_TEST:
+            testProgramCo.reset();
+            if (testProgramCo.isSuspended()) {
+                testProgramCo.resume();
+            }
+            break;
+        case PROGRAM_CLOCK:
+            clockProgramCo.reset();
+            if (clockProgramCo.isSuspended()) {
+                clockProgramCo.resume();
+            }
+            break;
+    }
+}
+
+void suspendAll(int exceptProgram) {
+    if (exceptProgram != PROGRAM_INIT) {
         initProgramCo.suspend();
     }
-    if (&testProgramCo != except) {
+    if (exceptProgram != PROGRAM_TEST) {
         testProgramCo.suspend();
     }
-    if (&clockProgramCo != except) {
+    if (exceptProgram != PROGRAM_CLOCK) {
         clockProgramCo.suspend();
     }
 }
