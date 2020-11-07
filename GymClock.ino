@@ -7,86 +7,13 @@
 #include <ESP8266HTTPUpdateServer.h>
 #include <NTPClient.h>
 #include <WiFiUdp.h>
+#include <AceRoutine.h>
 #include <AceTime.h>
+#include "common.h"
+#include "programs.h"
 
+using namespace ace_routine;
 using namespace ace_time;
-
-const char AP_SSID[] = "GymClockAdmin";
-# Change this to the actual password before uploading.
-const char AP_PASSWORD[] = "password";
-const IPAddress AP_LOCAL_IP(192, 168, 4, 22);
-const IPAddress AP_GATEWAY(192, 168, 4, 9);
-const IPAddress AP_SUBNET_MASK(255, 255, 255, 0);
-
-const int MAX_SSID_SIZE = 32;
-const int MAX_PASSWORD_SIZE = 32;
-
-// EEPROM offsets.
-// 1 byte for ssid field length
-// MAX_SSID_SIZE for ssid field
-// 1 byte for password field length
-// MAX_PASSWORD_SIZE for password field
-const int EEPROM_SIZE = 2 + MAX_SSID_SIZE + MAX_PASSWORD_SIZE;
-const int SSID_LEN_EEPROM_ADDR = 0;
-const int SSID_EEPROM_ADDR = 1 + SSID_LEN_EEPROM_ADDR;
-const int PASSWORD_LEN_EEPROM_ADDR = SSID_EEPROM_ADDR + MAX_SSID_SIZE;
-const int PASSWORD_EEPROM_ADDR = 1 + PASSWORD_LEN_EEPROM_ADDR;
-
-// SER
-const int srDataPin = D3;
-// RCLK
-const int srStorageClockPin = D2;
-// SRCLK
-const int srShiftClockPin = D1;
-// The address pins
-const int addrBitMap[4] = { D4, D5, D6, D7 };
-// Controls Speakers
-const int tonePin = D0;
-
-// Indexed by 'char' - '0'
-const byte segmentsForNumericChars[] = {
-  //_GFEDCBA
-  0b00111111, // '0'
-  0b00110000, // '1'
-  0b01101101, // '2'
-  0b01111001, // '3'
-  0b01110010, // '4'
-  0b01011011, // '5'
-  0b01011111, // '6'
-  0b00110001, // '7'
-  0b01111111, // '8'
-  0b01111011, // '9'
-};
-// Indexed by 'char' - 'a' or 'A'
-const byte segmentsForAlphabeticChars[] = {
-  //_GFEDCBA
-  0b01110111, // 'a'
-  0b00000000, // 'b'
-  0b00000000, // 'c'
-  0b01011110, // 'd'
-  0b01001111, // 'e'
-  0b00000000, // 'f'
-  0b00000000, // 'g'
-  0b01110110, // 'h'
-  0b00000000, // 'i'
-  0b00000000, // 'j'
-  0b00000000, // 'k'
-  0b00001110, // 'l'
-  0b00000000, // 'm'
-  0b00110111, // 'n'
-  0b00111111, // 'o'
-  0b00000000, // 'p'
-  0b00000000, // 'q'
-  0b00000000, // 'r'
-  0b01011011, // 's'
-  0b00110001, // 't'
-  0b00000000, // 'u'
-  0b00000000, // 'v'
-  0b00000000, // 'w'
-  0b00000000, // 'x'
-  0b00000000, // 'y'
-  0b00000000, // 'z'
-};
 
 const int FORMAT_BUF_SIZE = 256;
 char tempFormatBuffer[FORMAT_BUF_SIZE] = {0};
@@ -117,17 +44,7 @@ bool networkActive = false;
 char wifiSSID[MAX_SSID_SIZE + 1] = {0};
 char wifiPassword[MAX_PASSWORD_SIZE + 1] = {0};
 
-const int NUM_DIGITS = 10;
-// 7 for the main segments in the digit, and the last bit for the colon/separator segment.
-const int NUM_SEGMENTS_PER_DIGIT = 8;
-const int NUM_SEGMENTS = NUM_DIGITS * NUM_SEGMENTS_PER_DIGIT;
-// Holds the state for the entire display. The main loop constantly renders the display by lighting
-// up digits in turn over and over. Human persistence of vision creates the illusion that the entire
-// display is lit up at once.
-// The main 6 digits are at indices 0-5. The left 2-digit cluster is at indices 6-7, and the right at 8-9.
 byte displayState[NUM_DIGITS] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-// The number of digits that will be lit at once. 10 would be ideal, but would take too much current (~1 amp per fully-lit digit).
-int litRenderWindow = 3;
 
 struct InitProgram {
   void onBegin(unsigned long now);
@@ -171,8 +88,12 @@ int currentProgram = PROGRAM_TEST;
 unsigned long programNextUpdateTimeMillis = 0;
 int programUpdateTick = 0;
 
-static const int CACHE_SIZE = 3;
-static BasicZoneManager<CACHE_SIZE> zoneManager(
+TestProgramCo testProgramCo;
+InitProgramCo initProgramCo;
+ClockProgramCo clockProgramCo;
+LoopProgramCo loopProgramCo;
+
+BasicZoneManager<ZONE_MGR_CACHE_SIZE> zoneManager(
     zonedb::kZoneRegistrySize, zonedb::kZoneRegistry);
 
 void setup() {
@@ -221,6 +142,23 @@ void setup() {
     pinMode(addrBitMap[i], OUTPUT);
   }
 
+  // Set up the coroutine scheduler.
+  initProgramCo.setupCoroutine(F("initProgramCo"));
+  testProgramCo.setupCoroutine(F("testProgramCo"));
+  clockProgramCo.setupCoroutine(F("clockProgramCo"));
+  // loopProgramCo.setupCoroutine(F("loopProgramCo"));
+  CoroutineScheduler::setup();
+
+  Serial.println("Listing coroutines after setup");
+  CoroutineScheduler::list(Serial);
+
+  // Suspend everything but the init program.
+  // WARNING: AceRoutine seems to have a bug if you suspend then resume here.
+  suspendAll(&initProgramCo);
+
+  Serial.println("Listing coroutines after suspending initial");
+  CoroutineScheduler::list(Serial);
+
 //  auto registrar = zoneManager.getRegistrar();
 //  for (uint16_t i = 0; i < registrar.registrySize(); i++) {
 //    BasicZone zoneInfo = registrar.getZoneInfoForIndex(i);
@@ -238,12 +176,15 @@ void loop() {
     timeClient.update();
   }
   renderDisplay();
-  if (programUpdateTick == 64) {
-    updateProgram();
-    programUpdateTick = 0;
-  } else {
-    programUpdateTick += 1;
-  }
+
+  CoroutineScheduler::loop();
+
+//  if (programUpdateTick == 64) {
+//    updateProgram();
+//    programUpdateTick = 0;
+//  } else {
+//    programUpdateTick += 1;
+//  }
 }
 
 void initStoredSettings() {
@@ -793,92 +734,6 @@ void updateWiFiSettings(String newSSID, String newPassword) {
   if (strlen(wifiSSID) > 0 && strlen(wifiPassword) > 0) {
     Serial.println("Beginning WiFi.");
     WiFi.begin(wifiSSID, wifiPassword);
-  }
-}
-
-void waitForSerial() {
-  // Wait for any data before proceeding...
-  while (Serial.available() == 0) {
-    yield();
-  }
-  // Then discard that data.
-  while (Serial.available() > 0) {
-    Serial.read();
-  }
-}
-
-void renderDisplay() {
-  for (int digit = 0; digit < NUM_DIGITS + litRenderWindow; digit++) {
-//    selectDigitForRender(digit);
-//    renderToDigit(displayState[digit]);
-//    renderToDigit(0);
-    // Turn off digit that has fallen out of the lit window.
-    int offDigit = digit - litRenderWindow;
-    if (offDigit >= 0 && offDigit < NUM_DIGITS) {
-      selectDigitForRender(offDigit);
-      renderToDigit(0);
-    }
-    
-    // Turn on digit that has entered the lit window.
-    if (digit < NUM_DIGITS) {
-      selectDigitForRender(digit);
-      renderToDigit(displayState[digit]);
-    }
-//    delay(1000);
-  }
-}
-
-// Helper function used by the main renderDisplay function. Selects a certain
-// digit by setting the address lines appropriately.
-void selectDigitForRender(int digit) {
-  for (int i = 0; i < 4; i++) {
-    if ((digit >> i) & 1 == 1) {
-      digitalWrite(addrBitMap[i], HIGH);
-    } else {
-      digitalWrite(addrBitMap[i], LOW);
-    }
-  }
-}
-
-void renderToDigit(byte digitState) {
-  digitalWrite(srStorageClockPin, LOW);
-  shiftOut(srDataPin, srShiftClockPin, MSBFIRST, digitState);
-  digitalWrite(srStorageClockPin, HIGH);
-}
-
-// Display an ASCII character on a given digit, optionally lighting up the colon light too.
-void updateDigit(byte digit, unsigned char character, bool colon) {
-  byte segments = 0;
-  if (character >= '0' && character <= '9') {
-    segments = segmentsForNumericChars[character - '0'];
-  } else if (character >= 'A' && character <= 'Z') {
-    segments = segmentsForAlphabeticChars[character - 'A'];
-  } else if (character >= 'a' && character <= 'z') {
-    segments = segmentsForAlphabeticChars[character - 'a'];
-  } else if (character == '-') {
-    segments = 0b01000000;
-  }
-  displayState[digit] = segments;
-}
-
-void show2DigitNumber(int number, byte firstDigit) {
-  if (number > 99) {
-    updateDigit(firstDigit, '-', false);
-    updateDigit(firstDigit + 1, '-', false);
-    return;
-  }
-  if (number < 0) {
-    updateDigit(firstDigit, '-', false);
-    updateDigit(firstDigit + 1, '-', false);
-    return;
-  }
-  updateDigit(firstDigit, '0' + number / 10, false);
-  updateDigit(firstDigit + 1, '0' + number % 10, false);
-}
-
-void clearDisplay() {
-  for (int i = 0; i < NUM_DIGITS; i++) {
-    updateDigit(i, ' ', false);
   }
 }
 
