@@ -1,0 +1,16 @@
+EESchema-DOCLIB  Version 2.0
+#
+$CMP SN74HC02NE4
+F https://www.ti.com/lit/ds/symlink/sn74hc02.pdf
+$ENDCMP
+#
+$CMP SN74HC04N
+D Hex Inverter
+F https://www.ti.com/lit/ds/symlink/sn74hc04.pdf
+$ENDCMP
+#
+$CMP SN74HC138N
+F https://www.ti.com/lit/ds/symlink/sn74hc138.pdf
+$ENDCMP
+#
+#End Doc Library

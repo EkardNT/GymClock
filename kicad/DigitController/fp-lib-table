@@ -1,0 +1,3 @@
+(fp_lib_table
+  (lib (name SevenSegment)(type KiCad)(uri "C:/Users/Drake/KiCAD Projects/SevenSegment/SevenSegment/SevenSegment.pretty")(options "")(descr ""))
+)

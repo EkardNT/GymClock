@@ -1,0 +1,110 @@
+EESchema-LIBRARY Version 2.4
+#encoding utf-8
+#
+# Connector_Generic_Conn_01x01
+#
+DEF Connector_Generic_Conn_01x01 J 0 40 Y N 1 F N
+F0 "J" 0 100 50 H V C CNN
+F1 "Connector_Generic_Conn_01x01" 0 -100 50 H V C CNN
+F2 "" 0 0 50 H I C CNN
+F3 "" 0 0 50 H I C CNN
+$FPLIST
+ Connector*:*_1x??_*
+$ENDFPLIST
+DRAW
+S -50 5 0 -5 1 1 6 N
+S -50 50 50 -50 1 1 10 f
+X Pin_1 1 -200 0 150 R 50 50 1 1 P
+ENDDRAW
+ENDDEF
+#
+# Device_R
+#
+DEF Device_R R 0 0 N Y 1 F N
+F0 "R" 80 0 50 V V C CNN
+F1 "Device_R" 0 0 50 V V C CNN
+F2 "" -70 0 50 V I C CNN
+F3 "" 0 0 50 H I C CNN
+$FPLIST
+ R_*
+$ENDFPLIST
+DRAW
+S -40 -100 40 100 0 1 10 N
+X ~ 1 0 150 50 D 50 50 1 1 P
+X ~ 2 0 -150 50 U 50 50 1 1 P
+ENDDRAW
+ENDDEF
+#
+# Mechanical_MountingHole_Pad
+#
+DEF Mechanical_MountingHole_Pad H 0 40 N N 1 F N
+F0 "H" 0 250 50 H V C CNN
+F1 "Mechanical_MountingHole_Pad" 0 175 50 H V C CNN
+F2 "" 0 0 50 H I C CNN
+F3 "" 0 0 50 H I C CNN
+$FPLIST
+ MountingHole*Pad*
+$ENDFPLIST
+DRAW
+C 0 50 50 0 1 50 N
+X 1 1 0 -100 100 U 50 50 1 1 I
+ENDDRAW
+ENDDEF
+#
+# SamacSys_Parts_JE2835AWT-00-0000-000A0HG940E
+#
+DEF SamacSys_Parts_JE2835AWT-00-0000-000A0HG940E LED 0 30 Y Y 1 F N
+F0 "LED" 500 350 50 H V L BNN
+F1 "SamacSys_Parts_JE2835AWT-00-0000-000A0HG940E" 500 250 50 H V L BNN
+F2 "JK2835AWT000000000B0HL430E" 500 150 50 H I L BNN
+F3 "https://www.cree.com/led-components/media/documents/data-sheet-JSeries-2835.pdf" 500 50 50 H I L BNN
+F4 "CREE - JE2835AWT-00-0000-000A0HG940E - LED, HB, NEUTRAL WHITE, 4000K, 75LM" 500 -50 50 H I L BNN "Description"
+F5 "Cree, Inc." 500 -250 50 H I L BNN "Manufacturer_Name"
+F6 "JE2835AWT-00-0000-000A0HG940E" 500 -350 50 H I L BNN "Manufacturer_Part_Number"
+F7 "JE2835AWT-00-0000-000A0HG940E" 500 -450 50 H I L BNN "Arrow Part Number"
+F8 "https://www.arrow.com/en/products/je2835awt-00-0000-000a0hg940e/cree" 500 -550 50 H I L BNN "Arrow Price/Stock"
+F9 "941-JE2835W00A0HG940" 500 -650 50 H I L BNN "Mouser Part Number"
+F10 "https://www.mouser.com/Search/Refine.aspx?Keyword=941-JE2835W00A0HG940" 500 -750 50 H I L BNN "Mouser Price/Stock"
+DRAW
+P 2 0 1 6 100 0 200 0 N
+P 2 0 1 6 200 100 200 -100 N
+P 2 0 1 6 250 100 150 200 N
+P 2 0 1 6 350 100 250 200 N
+P 2 0 1 6 400 0 500 0 N
+P 4 0 1 6 200 0 400 100 400 -100 200 0 N
+P 4 0 1 10 210 170 180 140 150 200 210 170 F
+P 4 0 1 10 310 170 280 140 250 200 310 170 F
+X K 1 0 0 100 R 50 50 0 0 P
+X A 2 600 0 100 L 50 50 0 0 P
+ENDDRAW
+ENDDEF
+#
+# SamacSys_Parts_PMBT2222A,215
+#
+DEF SamacSys_Parts_PMBT2222A,215 Q 0 30 Y Y 1 F N
+F0 "Q" 550 50 50 H V L CNN
+F1 "SamacSys_Parts_PMBT2222A,215" 550 -50 50 H V L CNN
+F2 "SOT95P230X110-3N" 550 -150 50 H I L CNN
+F3 "http://assets.nexperia.com/documents/data-sheet/PMBT2222_PMBT2222A.pdf" 550 -250 50 H I L CNN
+F4 "PMBT2222; PMBT2222A - NPN switching transistors" 550 -350 50 H I L CNN "Description"
+F5 "1.1" 550 -450 50 H I L CNN "Height"
+F6 "771-PMBT2222A-T/R" 550 -550 50 H I L CNN "Mouser Part Number"
+F7 "https://www.mouser.co.uk/ProductDetail/Nexperia/PMBT2222A215?qs=LOCUfHb8d9u7n2jbGrJFWg%3D%3D" 550 -650 50 H I L CNN "Mouser Price/Stock"
+F8 "Nexperia" 550 -750 50 H I L CNN "Manufacturer_Name"
+F9 "PMBT2222A,215" 550 -850 50 H I L CNN "Manufacturer_Part_Number"
+DRAW
+C 350 0 158 0 1 10 N
+P 2 0 1 6 100 0 300 0 N
+P 2 0 1 6 300 -50 400 -150 N
+P 2 0 1 6 300 50 400 150 N
+P 2 0 1 20 300 100 300 -100 N
+P 2 0 1 6 400 -150 400 -200 N
+P 2 0 1 6 400 150 400 200 N
+P 4 0 1 10 330 -100 350 -80 370 -120 330 -100 F
+X ~ 1 0 0 100 R 50 50 0 0 P
+X ~ 2 400 -300 100 U 50 50 0 0 P
+X ~ 3 400 300 100 D 50 50 0 0 P
+ENDDRAW
+ENDDEF
+#
+#End Library

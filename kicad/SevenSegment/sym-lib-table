@@ -1,0 +1,4 @@
+(sym_lib_table
+  (lib (name SevenSegment)(type Legacy)(uri ${KIPRJMOD}/SevenSegment.lib)(options "")(descr ""))
+  (lib (name SamacSys_Parts)(type Legacy)(uri "C:/Users/Drake/KiCAD Projects/LibraryLoaderImports/SamacSys_Parts.lib")(options "")(descr ""))
+)
