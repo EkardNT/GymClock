@@ -6,6 +6,7 @@
 const int PROGRAM_INIT = 0;
 const int PROGRAM_TEST = 1;
 const int PROGRAM_CLOCK = 2;
+const int PROGRAM_COUNTDOWN = 3;
 
 int currentProgram();
 void changeProgram(int newProgram);
@@ -25,22 +26,30 @@ class InitProgramCo : public ace_routine::Coroutine {
 
 class ClockProgramCo : public ace_routine::Coroutine {
     public:
-        ClockProgramCo()
-            : format24(false) {}
+        ClockProgramCo() {}
         int runCoroutine() override;
 
-        bool format24;
+        bool format24 = false;
 };
 
-class LoopProgramCo : public ace_routine::Coroutine {
+class CountdownCo : public ace_routine::Coroutine {
     public:
-        LoopProgramCo() {}
+        CountdownCo() {}
         int runCoroutine() override;
+
+        int readySeconds = 0;
+        int sets = 0;
+        unsigned long setDurationMillis = 0;
+        unsigned long restDurationMillis = 0;
+
+    private:
+        unsigned long startMillis = 0;
+        unsigned long ageMillis = 0;
 };
 
 extern TestProgramCo testProgramCo;
 extern InitProgramCo initProgramCo;
 extern ClockProgramCo clockProgramCo;
-extern LoopProgramCo loopProgramCo;
+extern CountdownCo countdownCo;
 
 #endif

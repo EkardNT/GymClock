@@ -49,7 +49,7 @@ byte displayState[NUM_DIGITS] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 TestProgramCo testProgramCo;
 InitProgramCo initProgramCo;
 ClockProgramCo clockProgramCo;
-LoopProgramCo loopProgramCo;
+CountdownCo countdownCo;
 
 BasicZoneManager<ZONE_MGR_CACHE_SIZE> zoneManager(
     zonedb::kZoneRegistrySize, zonedb::kZoneRegistry);
@@ -104,7 +104,7 @@ void setup() {
   initProgramCo.setupCoroutine(F("initProgramCo"));
   testProgramCo.setupCoroutine(F("testProgramCo"));
   clockProgramCo.setupCoroutine(F("clockProgramCo"));
-  // loopProgramCo.setupCoroutine(F("loopProgramCo"));
+  countdownCo.setupCoroutine(F("countdownCo"));
   CoroutineScheduler::setup();
 
   Serial.println("Listing coroutines after setup");
@@ -136,7 +136,6 @@ void loop() {
     timeClient.update();
   }
   renderDisplay();
-
   CoroutineScheduler::loop();
 }
 
@@ -167,6 +166,8 @@ void networkInit(const WiFiEventStationModeGotIP& event) {
   userServer.on("/changeProgram/clock", HTTP_POST, serveUserChangeProgramClockSubmit);
   userServer.on("/changeProgram/test", HTTP_GET, serveUserChangeProgramTest);
   userServer.on("/changeProgram/test", HTTP_POST, serveUserChangeProgramTestSubmit);
+  userServer.on("/changeProgram/countdown", HTTP_GET, serveUserChangeProgramCountdown);
+  userServer.on("/changeProgram/countdown", HTTP_POST, serveUserChangeProgramCountdownSubmit);
   userServer.begin();
 
   httpUpdateServer.setup(&webUpdateServer);
@@ -483,6 +484,8 @@ void serveUserIndex() {
     case PROGRAM_CLOCK:
       body.replace(F("$CURRENT_PROGRAM"), F("Clock"));
       break;
+    case PROGRAM_COUNTDOWN:
+      body.replace(F("$CURRENT_PROGRAM"), F("Countdown"));
     default:
       body.replace(F("$CURRENT_PROGRAM"), F("Unknown"));
   }
@@ -511,6 +514,7 @@ void serveUserChangeProgram() {
                 <div><a href='/'>Back</a></div>\
                 <div><a href='/changeProgram/clock'>Clock</a></div>\
                 <div><a href='/changeProgram/stopwatch'>Stopwatch</a></div>\
+                <div><a href='/changeProgram/countdown'>Countdown</a></div>\
                 <div><a href='/changeProgram/test'>Test</a></div>\
             </div>\
         </body>\
@@ -640,6 +644,112 @@ void serveUserChangeProgramTestSubmit() {
         <body>\
             <nav><h1>Success</h1></nav>\
             <p><strong>Test</strong> program activated. Returning to main menu.</p>\
+        </body>\
+    </html>"));
+  userServer.send(200, F("text/html"), body);
+}
+
+void serveUserChangeProgramCountdown() {
+  WiFiClient client = userServer.client();
+  String body = "";
+  body.reserve(2048);
+  body.concat(F("\
+    <html>\
+        <head>\
+            <title>GymClock</title>\
+            <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+            <style>\
+                nav {\
+                    background-color: black;\
+                    color: white;\
+                }\
+                form > * {\
+                    display: block;\
+                }\
+            </style>\
+        </head>\
+        <body>\
+            <nav><h1>Activate Countdown</h1></nav>\
+            <div><a href='/changeProgram'>Back</a></div>\
+            <form method='post' action=''>\
+                <label>\
+                    Number of Sets\
+                    <input type='number' name='sets' value='1' min='1' max='99' required>\
+                </label>\
+                <div>\
+                    Set Time\
+                    <label>Hours <input type='number' name='setDurationHours' value='0' min='0' max='99' required></label>\
+                    <label>Minutes <input type='number' name='setDurationMinutes' value='3' min='0' max='60' required></label>\
+                    <label>Seconds <input type='number' name='setDurationSeconds' value='0' min='0' max='60' required></label>\
+                </div>\
+                <div>\
+                    Rest Time\
+                    <label>H <input type='number' name='restDurationHours' value='0' min='0' max='99' required></label>\
+                    <label>M <input type='number' name='restDurationMinutes' value='1' min='0' max='60' required></label>\
+                    <label>S <input type='number' name='restDurationSeconds' value='0' min='0' max='60' required></label>\
+                </div>\
+                <label>\
+                    Preparation Time\
+                    <input type='number' name='readySeconds' value='10' min='0' max='10' required>\
+                </label>\
+                <input type='submit' value='Activate'>\
+            </form>\
+        </body>\
+    </html>"));
+  userServer.send(200, F("text/html"), body);
+}
+
+void serveUserChangeProgramCountdownSubmit() {
+  int readySeconds = userServer.arg(F("readySeconds")).toInt();
+  readySeconds = constrain(readySeconds, 0, 10);
+  int sets = userServer.arg(F("sets")).toInt();
+  sets = constrain(sets, 1, 99);
+  unsigned long setDurationHours = userServer.arg(F("setDurationHours")).toInt();
+  setDurationHours == constrain(setDurationHours, 0, 99);
+  unsigned long setDurationMinutes = userServer.arg(F("setDurationMinutes")).toInt();
+  setDurationMinutes = constrain(setDurationMinutes, 0, 60);
+  unsigned long setDurationSeconds = userServer.arg(F("setDurationSeconds")).toInt();
+  setDurationSeconds = constrain(setDurationSeconds, 0, 60);
+  unsigned long restDurationHours = userServer.arg(F("restDurationHours")).toInt();
+  restDurationHours = constrain(restDurationHours, 0, 99);
+  unsigned long restDurationMinutes = userServer.arg(F("restDurationMinutes")).toInt();
+  restDurationMinutes = constrain(restDurationMinutes, 0, 60);
+  unsigned long restDurationSeconds = userServer.arg(F("restDurationSeconds")).toInt();
+  restDurationSeconds = constrain(restDurationSeconds, 0, 60);
+
+  unsigned long setDuration = setDurationHours * MILLIS_PER_HOUR
+    + setDurationMinutes * MILLIS_PER_MINUTE
+    + setDurationSeconds * MILLIS_PER_SECOND;
+  unsigned long restDuration = restDurationHours * MILLIS_PER_HOUR
+    + restDurationMinutes * MILLIS_PER_MINUTE
+    + restDurationSeconds * MILLIS_PER_SECOND;
+
+  countdownCo.sets = sets;
+  countdownCo.readySeconds = readySeconds;
+  countdownCo.setDurationMillis = setDuration;
+  countdownCo.restDurationMillis = restDuration;
+
+  changeProgram(PROGRAM_COUNTDOWN);
+
+  WiFiClient client = userServer.client();
+  String body = "";
+  body.reserve(2048);
+  body.concat(F("\
+      <html>\
+        <head>\
+            <title>GymClock</title>\
+            <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+            <meta http-equiv='refresh' content='3;url=/'>\
+            <style>\
+                nav {\
+                    background-color: green;\
+                    color: white;\
+                }\
+            </style>\
+        </head>\
+        <body>\
+            <nav><h1>Success</h1></nav>\
+            <p><strong>Countdown</strong> program activated. Returning to main menu.</p>\
         </body>\
     </html>"));
   userServer.send(200, F("text/html"), body);

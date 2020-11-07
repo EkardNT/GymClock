@@ -65,10 +65,10 @@ const byte segmentsForAlphabeticChars[] = {
   0b01110111, // 'a'
   0b00000000, // 'b'
   0b00000000, // 'c'
-  0b01011110, // 'd'
+  0b01111100, // 'd'
   0b01001111, // 'e'
   0b00000000, // 'f'
-  0b00000000, // 'g'
+  0b01011111, // 'g'
   0b01110110, // 'h'
   0b00000000, // 'i'
   0b00000000, // 'j'
@@ -79,14 +79,14 @@ const byte segmentsForAlphabeticChars[] = {
   0b00111111, // 'o'
   0b01110011, // 'p'
   0b00000000, // 'q'
-  0b00000000, // 'r'
+  0b01000100, // 'r'
   0b01011011, // 's'
   0b00110001, // 't'
   0b00000000, // 'u'
   0b00000000, // 'v'
   0b00000000, // 'w'
   0b00000000, // 'x'
-  0b00000000, // 'y'
+  0b01110010, // 'y'
   0b00000000, // 'z'
 };
 
@@ -106,6 +106,10 @@ const int LIT_RENDER_WINDOW = 3;
 
 const int ZONE_MGR_CACHE_SIZE = 3;
 extern ace_time::BasicZoneManager<ZONE_MGR_CACHE_SIZE> zoneManager;
+
+const unsigned long MILLIS_PER_SECOND = 1000;
+const unsigned long MILLIS_PER_MINUTE = 60 * MILLIS_PER_SECOND;
+const unsigned long MILLIS_PER_HOUR = 60 * MILLIS_PER_MINUTE;
 
 void waitForSerial();
 

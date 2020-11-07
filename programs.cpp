@@ -39,6 +39,14 @@ void changeProgram(int newProgram) {
                 clockProgramCo.resume();
             }
             break;
+        case PROGRAM_COUNTDOWN:
+            countdownCo.reset();
+            if (countdownCo.isSuspended()) {
+                countdownCo.resume();
+            }
+            break;
+        default:
+            Serial.println("ERROR: cannot change to unknown program!");
     }
 }
 
@@ -51,6 +59,9 @@ void suspendAll(int exceptProgram) {
     }
     if (exceptProgram != PROGRAM_CLOCK) {
         clockProgramCo.suspend();
+    }
+    if (exceptProgram != PROGRAM_COUNTDOWN) {
+        countdownCo.suspend();
     }
 }
 
@@ -119,9 +130,7 @@ int InitProgramCo::runCoroutine() {
     updateDigit(5, 'N', false);
     COROUTINE_DELAY(3000);
 
-    Serial.println("Transition to clock program in InitProgramCo");
-    // Transition to clock program.
-    clockProgramCo.resume();
+    changeProgram(PROGRAM_CLOCK);
 
     COROUTINE_END();
 }
@@ -175,20 +184,137 @@ void printlnStatus(Coroutine *co) {
     }
 }
 
-int LoopProgramCo::runCoroutine() {
-    COROUTINE_LOOP() {
-        Serial.println("Loop coroutine");
-        CoroutineScheduler::list(Serial);
-        Serial.println("Coroutine statuses:");
-        Serial.print("testProgramCo: ");
-        printlnStatus(&testProgramCo);
-        Serial.print("initProgramCo: ");
-        printlnStatus(&initProgramCo);
-        Serial.print("clockProgramCo: ");
-        printlnStatus(&clockProgramCo);
-        Serial.print("loopProgramCo: ");
-        printlnStatus(&loopProgramCo);
-        COROUTINE_DELAY(2000);
-    }
-}
+int CountdownCo::runCoroutine() {
+    COROUTINE_BEGIN();
 
+    clearDisplay();
+    show2DigitNumber(this->sets, 6);
+    updateDigit(0, 'G', false);
+    updateDigit(1, 'E', false);
+    updateDigit(2, 'T', false);
+    COROUTINE_DELAY(1000);
+    updateDigit(0, 'R', false);
+    updateDigit(1, 'E', false);
+    updateDigit(2, 'A', false);
+    updateDigit(3, 'D', false);
+    updateDigit(4, 'Y', false);
+    COROUTINE_DELAY(2000);
+
+    // Do an initial countdown before the first set.
+    while (this->readySeconds > 0) {
+        clearDisplay();
+        show2DigitNumber(this->readySeconds, 2);
+        show2DigitNumber(this->sets, 6);
+
+        // Also beep the last 3 seconds.
+        if (this->readySeconds <= 3) {
+            // TODO: play sound here
+        }
+
+        COROUTINE_DELAY(1000);
+        this->readySeconds -= 1;
+    }
+
+    // Count down the sets.
+    while (this->sets > 0) {
+        // TODO: play sound to mark the start of a set.
+
+        this->startMillis = millis();
+        this->ageMillis = 0;
+
+        // Count down the set duration.
+        while (this->ageMillis < this->setDurationMillis) {
+            unsigned long remainingMillis = this->setDurationMillis - this->ageMillis;
+            unsigned long hoursPart = remainingMillis / MILLIS_PER_HOUR;
+            remainingMillis -= hoursPart * MILLIS_PER_HOUR;
+            unsigned long minutesPart = remainingMillis / MILLIS_PER_MINUTE;
+            remainingMillis -= minutesPart * MILLIS_PER_MINUTE;
+            unsigned long secondsPart = remainingMillis / MILLIS_PER_SECOND;
+            remainingMillis -= secondsPart * MILLIS_PER_SECOND;
+
+            clearDisplay();
+            show2DigitNumber(hoursPart, 0);
+            show2DigitNumber(minutesPart, 2);
+            show2DigitNumber(secondsPart, 4);
+            show2DigitNumber(this->sets, 6);
+
+
+            COROUTINE_DELAY(250);
+
+            unsigned long now = millis();
+            // Just make sure the clock never goes backwards. This could probably never happen
+            // on a single-core machine anyways but can't hurt to guard against it.
+            if (now < startMillis) {
+                now = startMillis;
+            }
+            this->ageMillis = now - this->startMillis;
+        }
+
+        this->sets -= 1;
+
+        // Now show "REST" on the display for 3 seconds, followed by counting down the
+        // rest timer. We could easily account the 3-second period against the rest time by
+        // updating the startMillis before we show the word, but I choose not to because I
+        // think its more understandable not to. Plus, 3 extra seconds of rest :)
+        if (this->sets > 0 && this->restDurationMillis > 0) {
+            // TODO: play sound too
+            clearDisplay();
+            updateDigit(1, 'R', false);
+            updateDigit(2, 'E', false);
+            updateDigit(3, 'S', false);
+            updateDigit(4, 'T', false);
+            show2DigitNumber(this->sets, 6);
+            updateDigit(8, '-', false);
+            updateDigit(9, '-', false);
+
+            COROUTINE_DELAY(3000);
+
+            this->startMillis = millis();
+            this->ageMillis = 0;
+
+            // Count down the rest duration.
+            while (this->ageMillis < this->restDurationMillis) {
+                unsigned long remainingMillis = this->restDurationMillis - this->ageMillis;
+                unsigned long hoursPart = remainingMillis / MILLIS_PER_HOUR;
+                remainingMillis -= hoursPart * MILLIS_PER_HOUR;
+                unsigned long minutesPart = remainingMillis / MILLIS_PER_MINUTE;
+                remainingMillis -= minutesPart * MILLIS_PER_MINUTE;
+                unsigned long secondsPart = remainingMillis / MILLIS_PER_SECOND;
+                remainingMillis -= secondsPart * MILLIS_PER_SECOND;
+
+                clearDisplay();
+                show2DigitNumber(hoursPart, 0);
+                show2DigitNumber(minutesPart, 2);
+                show2DigitNumber(secondsPart, 4);
+                show2DigitNumber(this->sets, 6);
+                updateDigit(8, '-', false);
+                updateDigit(9, '-', false);
+
+                COROUTINE_DELAY(250);
+
+                unsigned long now = millis();
+                // Just make sure the clock never goes backwards. This could probably never happen
+                // on a single-core machine anyways but can't hurt to guard against it.
+                if (now < startMillis) {
+                    now = startMillis;
+                }
+                this->ageMillis = now - this->startMillis;
+            }
+        }
+    }
+
+    static int i;
+    for (i = 0; i < 10; i++) {
+        clearDisplay();
+        updateDigit(1, 'D', false);
+        updateDigit(2, 'O', false);
+        updateDigit(3, 'N', false);
+        updateDigit(4, 'E', false);
+
+        COROUTINE_DELAY(1000);
+        clearDisplay();
+        COROUTINE_DELAY(750);
+    }
+
+    COROUTINE_END();
+}
