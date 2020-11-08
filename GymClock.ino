@@ -687,13 +687,13 @@ void serveUserChangeProgramCountdown() {
                 <div>\
                     Set Time\
                     <label>Hours <input type='number' name='setDurationHours' value='0' min='0' max='99' required></label>\
-                    <label>Minutes <input type='number' name='setDurationMinutes' value='3' min='0' max='60' required></label>\
+                    <label>Minutes <input type='number' name='setDurationMinutes' value='1' min='0' max='60' required></label>\
                     <label>Seconds <input type='number' name='setDurationSeconds' value='0' min='0' max='60' required></label>\
                 </div>\
                 <div>\
                     Rest Time\
                     <label>H <input type='number' name='restDurationHours' value='0' min='0' max='99' required></label>\
-                    <label>M <input type='number' name='restDurationMinutes' value='1' min='0' max='60' required></label>\
+                    <label>M <input type='number' name='restDurationMinutes' value='0' min='0' max='60' required></label>\
                     <label>S <input type='number' name='restDurationSeconds' value='0' min='0' max='60' required></label>\
                 </div>\
                 <label>\

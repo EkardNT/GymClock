@@ -246,7 +246,6 @@ int CountdownCo::runCoroutine() {
             show2DigitNumber(secondsPart, 4);
             show2DigitNumber(this->sets, 6);
 
-
             COROUTINE_DELAY(250);
 
             unsigned long now = millis();
@@ -323,6 +322,8 @@ int CountdownCo::runCoroutine() {
         clearDisplay();
         COROUTINE_DELAY(750);
     }
+
+    changeProgram(PROGRAM_CLOCK);
 
     COROUTINE_END();
 }
