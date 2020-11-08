@@ -82,13 +82,13 @@ void setup() {
     Serial.println("One or more of wifiSSID or wifiPassword not available from EEPROM, not logging on to any network yet.");
   }
 
-  dnsServer.start(53, "gymclock.local", AP_LOCAL_IP);
+  dnsServer.start(53, F("gymclock.local"), AP_LOCAL_IP);
 
-  adminServer.on("/", HTTP_GET, serveAdminIndex);
-  adminServer.on("/reboot", HTTP_GET, serveAdminReboot);
-  adminServer.on("/rebootSubmit", HTTP_POST, serveAdminRebootSubmit);
-  adminServer.on("/changeWiFi", HTTP_GET, serveAdminChangeWiFi);
-  adminServer.on("/changeWiFiSubmit", HTTP_POST, serveAdminChangeWiFiSubmit);
+  adminServer.on(F("/"), HTTP_GET, serveAdminIndex);
+  adminServer.on(F("/reboot"), HTTP_GET, serveAdminReboot);
+  adminServer.on(F("/rebootSubmit"), HTTP_POST, serveAdminRebootSubmit);
+  adminServer.on(F("/changeWiFi"), HTTP_GET, serveAdminChangeWiFi);
+  adminServer.on(F("/changeWiFiSubmit"), HTTP_POST, serveAdminChangeWiFiSubmit);
   adminServer.begin();
 
   // Unfortunately the NTP/UDP request is apparently implemented as a blocking call, so it causes a noticable flicker.
@@ -167,16 +167,16 @@ void initStoredSettings() {
 void networkInit(const WiFiEventStationModeGotIP& event) {
   Serial.println("networkInit");
 
-  userServer.on("/", HTTP_GET, serveUserIndex);
-  userServer.on("/changeProgram", HTTP_GET, serveUserChangeProgram);
-  userServer.on("/changeProgram/clock", HTTP_GET, serveUserChangeProgramClock);
-  userServer.on("/changeProgram/clock", HTTP_POST, serveUserChangeProgramClockSubmit);
-  userServer.on("/changeProgram/test", HTTP_GET, serveUserChangeProgramTest);
-  userServer.on("/changeProgram/test", HTTP_POST, serveUserChangeProgramTestSubmit);
-  userServer.on("/changeProgram/countdown", HTTP_GET, serveUserChangeProgramCountdown);
-  userServer.on("/changeProgram/countdown", HTTP_POST, serveUserChangeProgramCountdownSubmit);
-  userServer.on("/changeProgram/stopwatch", HTTP_GET, serveUserChangeProgramStopwatch);
-  userServer.on("/changeProgram/stopwatch", HTTP_POST, serveUserChangeProgramStopwatchSubmit);
+  userServer.on(F("/"), HTTP_GET, serveUserIndex);
+  userServer.on(F("/changeProgram"), HTTP_GET, serveUserChangeProgram);
+  userServer.on(F("/changeProgram/clock"), HTTP_GET, serveUserChangeProgramClock);
+  userServer.on(F("/changeProgram/clock"), HTTP_POST, serveUserChangeProgramClockSubmit);
+  userServer.on(F("/changeProgram/test"), HTTP_GET, serveUserChangeProgramTest);
+  userServer.on(F("/changeProgram/test"), HTTP_POST, serveUserChangeProgramTestSubmit);
+  userServer.on(F("/changeProgram/countdown"), HTTP_GET, serveUserChangeProgramCountdown);
+  userServer.on(F("/changeProgram/countdown"), HTTP_POST, serveUserChangeProgramCountdownSubmit);
+  userServer.on(F("/changeProgram/stopwatch"), HTTP_GET, serveUserChangeProgramStopwatch);
+  userServer.on(F("/changeProgram/stopwatch"), HTTP_POST, serveUserChangeProgramStopwatchSubmit);
   userServer.begin();
 
   httpUpdateServer.setup(&webUpdateServer);
