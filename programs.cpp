@@ -2,6 +2,7 @@
 #include <AceTime.h>
 #include "programs.h"
 #include "common.h"
+#include "sound.h"
 
 using namespace ace_routine;
 
@@ -358,7 +359,9 @@ int StopwatchProgram::runCoroutine() {
         if (this->beepIntervalMillis > 0) {
             unsigned long millisSinceLastBeep = now > this->lastBeepTimeMillis ? now - this->lastBeepTimeMillis : 0;
             if (millisSinceLastBeep > this->beepIntervalMillis) {
-                // TODO: play beep sound
+                soundRoutine.playSound(SOUND_BEEP);
+                // tone(tonePin, 261, 250);
+                this->lastBeepTimeMillis = now;
             }
         }
 

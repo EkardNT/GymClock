@@ -11,6 +11,7 @@
 #include <AceTime.h>
 #include "common.h"
 #include "programs.h"
+#include "sound.h"
 
 using namespace ace_routine;
 using namespace ace_time;
@@ -46,11 +47,13 @@ char wifiPassword[MAX_PASSWORD_SIZE + 1] = {0};
 
 byte displayState[NUM_DIGITS] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
+// All coroutine instances.
 TestProgramCo testProgramCo;
 InitProgramCo initProgramCo;
 ClockProgramCo clockProgramCo;
 CountdownCo countdownCo;
 StopwatchProgram stopwatchProgram;
+SoundRoutine soundRoutine;
 
 BasicZoneManager<ZONE_MGR_CACHE_SIZE> zoneManager(
     zonedb::kZoneRegistrySize, zonedb::kZoneRegistry);
@@ -100,6 +103,7 @@ void setup() {
   for (int i = 0; i < 4; i++) {
     pinMode(addrBitMap[i], OUTPUT);
   }
+  pinMode(tonePin, OUTPUT);
 
   // Set up the coroutine scheduler.
   initProgramCo.setupCoroutine(F("initProgramCo"));
@@ -107,15 +111,16 @@ void setup() {
   clockProgramCo.setupCoroutine(F("clockProgramCo"));
   countdownCo.setupCoroutine(F("countdownCo"));
   stopwatchProgram.setupCoroutine(F("stopwatch"));
+  soundRoutine.setupCoroutine(F("sound"));
   CoroutineScheduler::setup();
 
   Serial.println("Listing coroutines after setup");
   CoroutineScheduler::list(Serial);
 
-  // Suspend everything but the init program. Ideally we would call changeProgram(PROGRAM_INIT)
+  // Suspend every program except the init program. Ideally we would call changeProgram(PROGRAM_INIT)
   // here instead of suspendAll, but that causes a crash reboot loop because AceRoutine has
   // some bug where the scheduler's linked list gets messed up if you make some combination
-  // of suspend/resume calls here.
+  // of suspend/resume calls here. See https://github.com/bxparks/AceRoutine/issues/19
   suspendAll(PROGRAM_INIT);
 
   Serial.println("Listing coroutines after suspending initial");
