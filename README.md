@@ -79,7 +79,7 @@ Speaking of current consumption, current measurements using my bench power suppl
 as a Kill-A-Watt device show significantly lower current usage than the ~3 amps I would
 expect for a fully-lit display (all digits showing 8s). I'm not sure whether this is simply
 measurement error (power switching on and off too fast for accurate measurements) or whether
-the LEDs used do have a "startup time" where they don't immediately get to full current draw
+the LEDs have some sort of "warmup time" where they don't immediately get to full current draw
 until some time after being turned on. Either way, I used a 4-amp power supply to be safe.
 
 **Historical note**: The shift register-based digit controller is actually the second
