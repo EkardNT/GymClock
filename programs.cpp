@@ -77,12 +77,12 @@ int TestProgramCo::runCoroutine() {
     COROUTINE_LOOP() {
         Serial.println("Test program showing TEST");
         for (int i = 0; i < NUM_DIGITS; i++) {
-            updateDigit(i, ' ', false);
+            updateDigit(i, ' ');
         }
-        updateDigit(1, 'T', false);
-        updateDigit(2, 'E', false);
-        updateDigit(3, 'S', false);
-        updateDigit(4, 'T', false);
+        updateDigit(1, 'T');
+        updateDigit(2, 'E');
+        updateDigit(3, 'S');
+        updateDigit(4, 'T');
 
         tone(tonePin, NOTE_C4, 500);
         COROUTINE_DELAY(750);
@@ -93,14 +93,14 @@ int TestProgramCo::runCoroutine() {
 
         Serial.println("Test program showing 0-9");
         for (int i = 0; i < NUM_DIGITS; i++) {
-            updateDigit(i, '0' + i, false);
+            updateDigit(i, '0' + i);
         }
 
         COROUTINE_DELAY(2000);
 
         Serial.println("Test program showing all 8s");
         for (int i = 0; i < NUM_DIGITS; i++) {
-            updateDigit(i, '8', false);
+            updateDigit(i, '8');
         }
 
         COROUTINE_DELAY(2000);
@@ -111,31 +111,31 @@ int InitProgramCo::runCoroutine() {
     COROUTINE_BEGIN();
 
     clearDisplay();
-    updateDigit(0, 'H', false);
-    updateDigit(1, 'E', false);
-    updateDigit(2, 'L', false);
-    updateDigit(3, 'L', false);
-    updateDigit(4, 'O', false);
+    updateDigit(0, 'H');
+    updateDigit(1, 'E');
+    updateDigit(2, 'L');
+    updateDigit(3, 'L');
+    updateDigit(4, 'O');
 
     COROUTINE_DELAY(5000);
 
     if (!networkActive) {
         clearDisplay();
-        updateDigit(0, 'N', false);
-        updateDigit(1, 'O', false);
-        updateDigit(3, 'N', false);
-        updateDigit(4, 'E', false);
-        updateDigit(5, 'T', false);
+        updateDigit(0, 'N');
+        updateDigit(1, 'O');
+        updateDigit(3, 'N');
+        updateDigit(4, 'E');
+        updateDigit(5, 'T');
         COROUTINE_AWAIT(networkActive);
     }
 
     Serial.println("Net on in InitProgramCo");
     clearDisplay();
-    updateDigit(0, 'N', false);
-    updateDigit(1, 'E', false);
-    updateDigit(2, 'T', false);
-    updateDigit(4, 'O', false);
-    updateDigit(5, 'N', false);
+    updateDigit(0, 'N');
+    updateDigit(1, 'E');
+    updateDigit(2, 'T');
+    updateDigit(4, 'O');
+    updateDigit(5, 'N');
     COROUTINE_DELAY(3000);
 
     changeProgram(PROGRAM_CLOCK);
@@ -147,11 +147,11 @@ int ClockProgramCo::runCoroutine() {
     COROUTINE_LOOP() {
         if (!networkActive) {
             clearDisplay();
-            updateDigit(0, 'N', false);
-            updateDigit(1, 'O', false);
-            updateDigit(3, 'N', false);
-            updateDigit(4, 'T', false);
-            updateDigit(5, 'P', false);
+            updateDigit(0, 'N');
+            updateDigit(1, 'O');
+            updateDigit(3, 'N');
+            updateDigit(4, 'T');
+            updateDigit(5, 'P');
             COROUTINE_AWAIT(networkActive);
         }
 
@@ -197,15 +197,15 @@ int CountdownCo::runCoroutine() {
 
     clearDisplay();
     show2DigitNumber(this->sets, 6);
-    updateDigit(0, 'G', false);
-    updateDigit(1, 'E', false);
-    updateDigit(2, 'T', false);
+    updateDigit(0, 'G');
+    updateDigit(1, 'E');
+    updateDigit(2, 'T');
     COROUTINE_DELAY(1000);
-    updateDigit(0, 'R', false);
-    updateDigit(1, 'E', false);
-    updateDigit(2, 'A', false);
-    updateDigit(3, 'D', false);
-    updateDigit(4, 'Y', false);
+    updateDigit(0, 'R');
+    updateDigit(1, 'E');
+    updateDigit(2, 'A');
+    updateDigit(3, 'D');
+    updateDigit(4, 'Y');
     COROUTINE_DELAY(2000);
 
     // Do an initial countdown before the first set.
@@ -267,13 +267,13 @@ int CountdownCo::runCoroutine() {
         if (this->sets > 0 && this->restDurationMillis > 0) {
             // TODO: play sound too
             clearDisplay();
-            updateDigit(1, 'R', false);
-            updateDigit(2, 'E', false);
-            updateDigit(3, 'S', false);
-            updateDigit(4, 'T', false);
+            updateDigit(1, 'R');
+            updateDigit(2, 'E');
+            updateDigit(3, 'S');
+            updateDigit(4, 'T');
             show2DigitNumber(this->sets, 6);
-            updateDigit(8, '-', false);
-            updateDigit(9, '-', false);
+            updateDigit(8, '-');
+            updateDigit(9, '-');
 
             COROUTINE_DELAY(3000);
 
@@ -295,8 +295,8 @@ int CountdownCo::runCoroutine() {
                 show2DigitNumber(minutesPart, 2);
                 show2DigitNumber(secondsPart, 4);
                 show2DigitNumber(this->sets, 6);
-                updateDigit(8, '-', false);
-                updateDigit(9, '-', false);
+                updateDigit(8, '-');
+                updateDigit(9, '-');
 
                 COROUTINE_DELAY(250);
 
@@ -314,10 +314,10 @@ int CountdownCo::runCoroutine() {
     static int i;
     for (i = 0; i < 10; i++) {
         clearDisplay();
-        updateDigit(1, 'D', false);
-        updateDigit(2, 'O', false);
-        updateDigit(3, 'N', false);
-        updateDigit(4, 'E', false);
+        updateDigit(1, 'D');
+        updateDigit(2, 'O');
+        updateDigit(3, 'N');
+        updateDigit(4, 'E');
 
         COROUTINE_DELAY(1000);
         clearDisplay();

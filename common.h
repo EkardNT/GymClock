@@ -122,7 +122,7 @@ void selectDigitForRender(int digit);
 void renderToDigit(byte digitState);
 
 // Display an ASCII character on a given digit, optionally lighting up the colon light too.
-void updateDigit(byte digit, unsigned char character, bool colon);
+void updateDigit(byte digit, unsigned char character);
 
 void show2DigitNumber(int number, byte firstDigit);
 

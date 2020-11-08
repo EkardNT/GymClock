@@ -47,7 +47,7 @@ void renderToDigit(byte digitState) {
 }
 
 // Display an ASCII character on a given digit, optionally lighting up the colon light too.
-void updateDigit(byte digit, unsigned char character, bool colon) {
+void updateDigit(byte digit, unsigned char character) {
   byte segments = 0;
   if (character >= '0' && character <= '9') {
     segments = segmentsForNumericChars[character - '0'];
@@ -63,21 +63,21 @@ void updateDigit(byte digit, unsigned char character, bool colon) {
 
 void show2DigitNumber(int number, byte firstDigit) {
   if (number > 99) {
-    updateDigit(firstDigit, '-', false);
-    updateDigit(firstDigit + 1, '-', false);
+    updateDigit(firstDigit, '-');
+    updateDigit(firstDigit + 1, '-');
     return;
   }
   if (number < 0) {
-    updateDigit(firstDigit, '-', false);
-    updateDigit(firstDigit + 1, '-', false);
+    updateDigit(firstDigit, '-');
+    updateDigit(firstDigit + 1, '-');
     return;
   }
-  updateDigit(firstDigit, '0' + number / 10, false);
-  updateDigit(firstDigit + 1, '0' + number % 10, false);
+  updateDigit(firstDigit, '0' + number / 10);
+  updateDigit(firstDigit + 1, '0' + number % 10);
 }
 
 void clearDisplay() {
   for (int i = 0; i < NUM_DIGITS; i++) {
-    updateDigit(i, ' ', false);
+    updateDigit(i, ' ');
   }
 }
