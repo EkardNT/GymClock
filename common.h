@@ -14,7 +14,7 @@
 #include <AceTime.h>
 
 const char AP_SSID[] = "GymClockAdmin";
-// Change this to the actual password before uploading.
+// Change this to the actual password before flashing the sign.
 const char AP_PASSWORD[] = "password";
 const IPAddress AP_LOCAL_IP(192, 168, 4, 22);
 const IPAddress AP_GATEWAY(192, 168, 4, 9);
