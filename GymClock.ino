@@ -177,6 +177,8 @@ void networkInit(const WiFiEventStationModeGotIP& event) {
   userServer.on(F("/changeProgram/countdown"), HTTP_POST, serveUserChangeProgramCountdownSubmit);
   userServer.on(F("/changeProgram/stopwatch"), HTTP_GET, serveUserChangeProgramStopwatch);
   userServer.on(F("/changeProgram/stopwatch"), HTTP_POST, serveUserChangeProgramStopwatchSubmit);
+  userServer.on(F("/reboot"), HTTP_GET, serveUserReboot);
+  userServer.on(F("/rebootSubmit"), HTTP_POST, serveUserRebootSubmit);
   userServer.begin();
 
   httpUpdateServer.setup(&webUpdateServer);
@@ -498,6 +500,10 @@ void serveUserIndex() {
                     <li>Hostname: $WIFI_HOSTNAME</li>\
                     <li>RSSI: $WIFI_RSSI</li>\
                 </ul>\
+            </div>\
+            <div>\
+                <h2>Reboot</h2>\
+                <div><a href='/reboot'>Reboot Sign</a></div>\
             </div>\
         </body>\
     </html>"));
@@ -848,6 +854,72 @@ void serveUserChangeProgramStopwatchSubmit() {
         </body>\
     </html>"));
   userServer.send(200, F("text/html"), body);
+}
+
+void serveUserReboot() {
+  WiFiClient client = userServer.client();
+  String body = "";
+  body.reserve(2048);
+  body.concat(F("\
+      <html>\
+        <head>\
+            <title>GymClock</title>\
+            <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+            <style>\
+                .nav {\
+                    background-color: red;\
+                    color: white;\
+                }\
+            </style>\
+        </head>\
+        <body>\
+            <nav class='nav'>\
+                <h1>GymClock</h1>\
+            </nav>\
+            <div>\
+                <h2>Confirm Restart</h2>\
+                <form action='rebootSubmit' method='post'>\
+                    <p>Are you sure you want to reboot the system?<p>\
+                    <p>If not, navigate back to the previous page.</p>\
+                    <input type='submit' value='Reboot'>\
+                </form>\
+            </div>\
+        </body>\
+    </html>"));
+  adminServer.send(200, F("text/html"), body);
+}
+
+void serveUserRebootSubmit() {
+  WiFiClient client = userServer.client();
+  String body = "";
+  body.reserve(2048);
+  body.concat(F("\
+      <html>\
+        <head>\
+            <title>GymClock</title>\
+            <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+            <style>\
+                .nav {\
+                    background-color: green;\
+                    color: white;\
+                }\
+            </style>\
+        </head>\
+        <body>\
+            <nav class='nav'>\
+                <h1>GymClock</h1>\
+            </nav>\
+            <div>\
+                <h2>Restarted</h2>\
+                <p>Adios, amigo. System going down for reboot NOW!</p>\
+            </div>\
+        </body>\
+    </html>"));
+  adminServer.send(200, F("text/html"), body);
+
+  Serial.println(F("Rebooting due to user request"));
+  delay(100);
+  ESP.restart();
 }
 
 void updateWiFiSettings(String newSSID, String newPassword) {
