@@ -6,10 +6,6 @@
 
 using namespace ace_routine;
 
-const int NOTE_C4 = 262;
-const int NOTE_E4 = 330;
-const int NOTE_G4 = 392;
-
 extern NTPClient timeClient;
 
 int currProgram = PROGRAM_INIT;
@@ -51,6 +47,7 @@ void changeProgram(int newProgram) {
             if (stopwatchProgram.isSuspended()) {
                 stopwatchProgram.resume();
             }
+            break;
         default:
             Serial.println("ERROR: cannot change to unknown program!");
     }
@@ -85,6 +82,7 @@ int TestProgramCo::runCoroutine() {
         updateDigit(3, 'S');
         updateDigit(4, 'T');
 
+        // TODO
         tone(tonePin, NOTE_C4, 500);
         COROUTINE_DELAY(750);
         tone(tonePin, NOTE_E4, 500);
@@ -118,7 +116,9 @@ int InitProgramCo::runCoroutine() {
     updateDigit(3, 'L');
     updateDigit(4, 'O');
 
-    COROUTINE_DELAY(5000);
+    COROUTINE_DELAY(3000);
+    soundRoutine.playSound(SOUND_STARTUP);
+    COROUTINE_DELAY(2000);
 
     if (!networkActive) {
         clearDisplay();
@@ -360,7 +360,6 @@ int StopwatchProgram::runCoroutine() {
             unsigned long millisSinceLastBeep = now > this->lastBeepTimeMillis ? now - this->lastBeepTimeMillis : 0;
             if (millisSinceLastBeep > this->beepIntervalMillis) {
                 soundRoutine.playSound(SOUND_BEEP);
-                // tone(tonePin, 261, 250);
                 this->lastBeepTimeMillis = now;
             }
         }
