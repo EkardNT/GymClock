@@ -685,23 +685,23 @@ void serveUserChangeProgramCountdown() {
             <nav><h1>Activate Countdown</h1></nav>\
             <div><a href='/changeProgram'>Back</a></div>\
             <form method='post' action=''>\
-                <label>\
-                    Number of Sets\
-                    <input type='number' name='sets' value='1' min='1' max='99' required>\
-                </label>\
                 <div>\
-                    Set Time\
-                    <label>Minutes <input type='number' name='setDurationMinutes' value='1' min='0' max='60' required></label>\
-                    <label>Seconds <input type='number' name='setDurationSeconds' value='0' min='0' max='60' required></label>\
+                    <strong>Sets</strong>\
+                    <div><label>Count <input type='number' name='sets' value='1' min='1' max='99' required></label></div>\
                 </div>\
                 <div>\
-                    Rest Time\
-                    <label>Seconds <input type='number' name='restSeconds' value='0' min='0' max='99' required></label>\
+                    <strong>Set Time</strong>\
+                    <div><label>Minutes <input type='number' name='setDurationMinutes' value='0' min='0' max='60' required></label></div>\
+                    <div><label>Seconds <input type='number' name='setDurationSeconds' value='0' min='0' max='60' required></label></div>\
                 </div>\
-                <label>\
-                    Preparation Time\
-                    <input type='number' name='readySeconds' value='10' min='0' max='10' required>\
-                </label>\
+                <div>\
+                    <strong>Rest Time</strong>\
+                    <div><label>Seconds <input type='number' name='restSeconds' value='0' min='0' max='99' required></label></div>\
+                </div>\
+                <div>\
+                    <strong>Preparation Time</strong>\
+                    <div><label>Seconds <input type='number' name='readySeconds' value='10' min='0' max='10' required></label></div>\
+                </div>\
                 <input type='submit' value='Activate'>\
             </form>\
         </body>\

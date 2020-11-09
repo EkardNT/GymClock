@@ -220,7 +220,7 @@ int CountdownCo::runCoroutine() {
         updateDigit(3, 'R');
         updateDigit(4, 'T');
         soundRoutine.playSound(SOUND_START_SET);
-        COROUTINE_DELAY(1500);
+        COROUTINE_DELAY(2000);
 
         this->startMillis = millis();
         this->ageMillis = 0;
