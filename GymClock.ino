@@ -691,7 +691,6 @@ void serveUserChangeProgramCountdown() {
                 </label>\
                 <div>\
                     Set Time\
-                    <label>Hours <input type='number' name='setDurationHours' value='0' min='0' max='99' required></label>\
                     <label>Minutes <input type='number' name='setDurationMinutes' value='1' min='0' max='60' required></label>\
                     <label>Seconds <input type='number' name='setDurationSeconds' value='0' min='0' max='60' required></label>\
                 </div>\
@@ -715,8 +714,6 @@ void serveUserChangeProgramCountdownSubmit() {
   readySeconds = constrain(readySeconds, 0, 10);
   int sets = userServer.arg(F("sets")).toInt();
   sets = constrain(sets, 1, 99);
-  unsigned long setDurationHours = userServer.arg(F("setDurationHours")).toInt();
-  setDurationHours == constrain(setDurationHours, 0, 99);
   unsigned long setDurationMinutes = userServer.arg(F("setDurationMinutes")).toInt();
   setDurationMinutes = constrain(setDurationMinutes, 0, 60);
   unsigned long setDurationSeconds = userServer.arg(F("setDurationSeconds")).toInt();
@@ -724,13 +721,12 @@ void serveUserChangeProgramCountdownSubmit() {
   unsigned long restSeconds = userServer.arg(F("restSeconds")).toInt();
   restSeconds = constrain(restSeconds, 0, 99);
 
-  unsigned long setDuration = setDurationHours * MILLIS_PER_HOUR
-    + setDurationMinutes * MILLIS_PER_MINUTE
+  unsigned long setDurationMillis = setDurationMinutes * MILLIS_PER_MINUTE
     + setDurationSeconds * MILLIS_PER_SECOND;
 
   countdownCo.sets = sets;
   countdownCo.readySeconds = readySeconds;
-  countdownCo.setDurationMillis = setDuration;
+  countdownCo.setDurationMillis = setDurationMillis;
   countdownCo.restSeconds = restSeconds;
 
   changeProgram(PROGRAM_COUNTDOWN);
@@ -784,7 +780,6 @@ void serveUserChangeProgramStopwatch() {
             <form method='post' action=''>\
                 <div>\
                     Beep Interval (leave 0 to disable)\
-                    <label>Hours <input type='number' name='beepIntervalHours' value='0' min='0' max='99' required></label>\
                     <label>Minutes <input type='number' name='beepIntervalMinutes' value='0' min='0' max='60' required></label>\
                     <label>Seconds <input type='number' name='beepIntervalSeconds' value='0' min='0' max='60' required></label>\
                 </div>\
@@ -796,15 +791,12 @@ void serveUserChangeProgramStopwatch() {
 }
 
 void serveUserChangeProgramStopwatchSubmit() {
-  unsigned long beepIntervalHours = userServer.arg(F("beepIntervalHours")).toInt();
-  beepIntervalHours = constrain(beepIntervalHours, 0, 99);
   unsigned long beepIntervalMinutes = userServer.arg(F("beepIntervalMinutes")).toInt();
   beepIntervalMinutes = constrain(beepIntervalMinutes, 0, 60);
   unsigned long beepIntervalSeconds = userServer.arg(F("beepIntervalSeconds")).toInt();
   beepIntervalSeconds = constrain(beepIntervalSeconds, 0, 60);
 
-  unsigned long beepIntervalMillis = beepIntervalHours * MILLIS_PER_HOUR
-    + beepIntervalMinutes * MILLIS_PER_MINUTE
+  unsigned long beepIntervalMillis = beepIntervalMinutes * MILLIS_PER_MINUTE
     + beepIntervalSeconds * MILLIS_PER_SECOND;
 
   stopwatchProgram.beepIntervalMillis = beepIntervalMillis;
