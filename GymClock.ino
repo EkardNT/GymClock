@@ -74,7 +74,7 @@ void setup() {
   WiFi.softAPConfig(AP_LOCAL_IP, AP_GATEWAY, AP_SUBNET_MASK);
   WiFi.softAP(AP_SSID, AP_PASSWORD);
   WiFi.setAutoConnect(false);
-  WiFi.setAutoReconnect(false);
+  WiFi.setAutoReconnect(true);
   if (strlen(wifiSSID) > 0 && strlen(wifiPassword) > 0) {
     Serial.printf("Trying to log on to WiFi network %s in station mode.\n", wifiSSID);
     WiFi.begin(wifiSSID, wifiPassword);
