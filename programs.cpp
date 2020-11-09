@@ -196,19 +196,6 @@ void printlnStatus(Coroutine *co) {
 int CountdownCo::runCoroutine() {
     COROUTINE_BEGIN();
 
-    clearDisplay();
-    show2DigitNumber(this->sets, 6);
-    updateDigit(0, 'G');
-    updateDigit(1, 'E');
-    updateDigit(2, 'T');
-    COROUTINE_DELAY(1000);
-    updateDigit(0, 'R');
-    updateDigit(1, 'E');
-    updateDigit(2, 'A');
-    updateDigit(3, 'D');
-    updateDigit(4, 'Y');
-    COROUTINE_DELAY(2000);
-
     // Do an initial countdown before the first set.
     while (this->readySeconds > 0) {
         clearDisplay();
@@ -297,9 +284,11 @@ int CountdownCo::runCoroutine() {
         updateDigit(2, 'O');
         updateDigit(3, 'N');
         updateDigit(4, 'E');
+        show2DigitNumber(0, 6);
 
         COROUTINE_DELAY(1000);
         clearDisplay();
+        show2DigitNumber(0, 6);
         COROUTINE_DELAY(750);
     }
 
