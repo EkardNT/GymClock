@@ -123,6 +123,26 @@ const int SOUND_STARTUP[] = {
     NOTE_AS5, 500, 1500,
     0
 };
+// TODO: make this distinct from STARTUP
+const int SOUND_START_SET[] = {
+    NOTE_DS6, 125, 0,
+    NOTE_DS5, 125, 250,
+    NOTE_AS5, 125, 375,
+    NOTE_GS5, 125, 750,
+    NOTE_DS6, 125, 1250,
+    NOTE_AS5, 500, 1500,
+    0
+};
+// TODO: make this distinct from STARTUP
+const int SOUND_START_REST[] = {
+    NOTE_DS6, 125, 0,
+    NOTE_DS5, 125, 250,
+    NOTE_AS5, 125, 375,
+    NOTE_GS5, 125, 750,
+    NOTE_DS6, 125, 1250,
+    NOTE_AS5, 500, 1500,
+    0
+};
 
 class SoundRoutine : public ace_routine::Coroutine {
     public:

@@ -697,9 +697,7 @@ void serveUserChangeProgramCountdown() {
                 </div>\
                 <div>\
                     Rest Time\
-                    <label>H <input type='number' name='restDurationHours' value='0' min='0' max='99' required></label>\
-                    <label>M <input type='number' name='restDurationMinutes' value='0' min='0' max='60' required></label>\
-                    <label>S <input type='number' name='restDurationSeconds' value='0' min='0' max='60' required></label>\
+                    <label>Seconds <input type='number' name='restSeconds' value='0' min='0' max='99' required></label>\
                 </div>\
                 <label>\
                     Preparation Time\
@@ -723,24 +721,17 @@ void serveUserChangeProgramCountdownSubmit() {
   setDurationMinutes = constrain(setDurationMinutes, 0, 60);
   unsigned long setDurationSeconds = userServer.arg(F("setDurationSeconds")).toInt();
   setDurationSeconds = constrain(setDurationSeconds, 0, 60);
-  unsigned long restDurationHours = userServer.arg(F("restDurationHours")).toInt();
-  restDurationHours = constrain(restDurationHours, 0, 99);
-  unsigned long restDurationMinutes = userServer.arg(F("restDurationMinutes")).toInt();
-  restDurationMinutes = constrain(restDurationMinutes, 0, 60);
-  unsigned long restDurationSeconds = userServer.arg(F("restDurationSeconds")).toInt();
-  restDurationSeconds = constrain(restDurationSeconds, 0, 60);
+  unsigned long restSeconds = userServer.arg(F("restSeconds")).toInt();
+  restSeconds = constrain(restSeconds, 0, 99);
 
   unsigned long setDuration = setDurationHours * MILLIS_PER_HOUR
     + setDurationMinutes * MILLIS_PER_MINUTE
     + setDurationSeconds * MILLIS_PER_SECOND;
-  unsigned long restDuration = restDurationHours * MILLIS_PER_HOUR
-    + restDurationMinutes * MILLIS_PER_MINUTE
-    + restDurationSeconds * MILLIS_PER_SECOND;
 
   countdownCo.sets = sets;
   countdownCo.readySeconds = readySeconds;
   countdownCo.setDurationMillis = setDuration;
-  countdownCo.restDurationMillis = restDuration;
+  countdownCo.restSeconds = restSeconds;
 
   changeProgram(PROGRAM_COUNTDOWN);
 

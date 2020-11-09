@@ -41,7 +41,7 @@ class CountdownCo : public ace_routine::Coroutine {
         int readySeconds = 0;
         int sets = 0;
         unsigned long setDurationMillis = 0;
-        unsigned long restDurationMillis = 0;
+        unsigned long restSeconds = 0;
 
     private:
         unsigned long startMillis = 0;

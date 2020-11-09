@@ -217,7 +217,7 @@ int CountdownCo::runCoroutine() {
 
         // Also beep the last 3 seconds.
         if (this->readySeconds <= 3) {
-            // TODO: play sound here
+            soundRoutine.playSound(SOUND_BEEP);
         }
 
         COROUTINE_DELAY(1000);
@@ -226,7 +226,14 @@ int CountdownCo::runCoroutine() {
 
     // Count down the sets.
     while (this->sets > 0) {
-        // TODO: play sound to mark the start of a set.
+        clearDisplay();
+        updateDigit(0, 'S');
+        updateDigit(1, 'T');
+        updateDigit(2, 'A');
+        updateDigit(3, 'R');
+        updateDigit(4, 'T');
+        soundRoutine.playSound(SOUND_START_SET);
+        COROUTINE_DELAY(1500);
 
         this->startMillis = millis();
         this->ageMillis = 0;
@@ -260,59 +267,31 @@ int CountdownCo::runCoroutine() {
 
         this->sets -= 1;
 
-        // Now show "REST" on the display for 3 seconds, followed by counting down the
-        // rest timer. We could easily account the 3-second period against the rest time by
-        // updating the startMillis before we show the word, but I choose not to because I
-        // think its more understandable not to. Plus, 3 extra seconds of rest :)
-        if (this->sets > 0 && this->restDurationMillis > 0) {
+        // Now enter the rest mode. Show "REST" on the display, flashing on and off on
+        // one-second intervals. The remaining rest time is shown in the lower right digit
+        // pair.
+        if (this->sets > 0 && this->restSeconds > 0) {
+            soundRoutine.playSound(SOUND_START_REST);
+
             // TODO: play sound too
-            clearDisplay();
-            updateDigit(1, 'R');
-            updateDigit(2, 'E');
-            updateDigit(3, 'S');
-            updateDigit(4, 'T');
-            show2DigitNumber(this->sets, 6);
-            updateDigit(8, '-');
-            updateDigit(9, '-');
-
-            COROUTINE_DELAY(3000);
-
-            this->startMillis = millis();
-            this->ageMillis = 0;
-
-            // Count down the rest duration.
-            while (this->ageMillis < this->restDurationMillis) {
-                unsigned long remainingMillis = this->restDurationMillis - this->ageMillis;
-                unsigned long hoursPart = remainingMillis / MILLIS_PER_HOUR;
-                remainingMillis -= hoursPart * MILLIS_PER_HOUR;
-                unsigned long minutesPart = remainingMillis / MILLIS_PER_MINUTE;
-                remainingMillis -= minutesPart * MILLIS_PER_MINUTE;
-                unsigned long secondsPart = remainingMillis / MILLIS_PER_SECOND;
-                remainingMillis -= secondsPart * MILLIS_PER_SECOND;
-
+            static unsigned long remainingRestSeconds = this->restSeconds;
+            while (remainingRestSeconds > 0) {
                 clearDisplay();
-                show2DigitNumber(hoursPart, 0);
-                show2DigitNumber(minutesPart, 2);
-                show2DigitNumber(secondsPart, 4);
+                updateDigit(1, 'R');
+                updateDigit(2, 'E');
+                updateDigit(3, 'S');
+                updateDigit(4, 'T');
                 show2DigitNumber(this->sets, 6);
-                updateDigit(8, '-');
-                updateDigit(9, '-');
+                show2DigitNumber(remainingRestSeconds, 8);
 
-                COROUTINE_DELAY(250);
-
-                unsigned long now = millis();
-                // Just make sure the clock never goes backwards. This could probably never happen
-                // on a single-core machine anyways but can't hurt to guard against it.
-                if (now < startMillis) {
-                    now = startMillis;
-                }
-                this->ageMillis = now - this->startMillis;
+                remainingRestSeconds -= 1;
+                COROUTINE_DELAY(1000);
             }
         }
     }
 
-    static int i;
-    for (i = 0; i < 10; i++) {
+    static int doneCounter;
+    for (doneCounter = 0; doneCounter < 5; doneCounter++) {
         clearDisplay();
         updateDigit(1, 'D');
         updateDigit(2, 'O');
