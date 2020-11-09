@@ -205,6 +205,11 @@ char * formatIntoTemp(long val) {
   return tempFormatBuffer;
 }
 
+char * formatFloatIntoTemp(float val) {
+  snprintf(tempFormatBuffer, FORMAT_BUF_SIZE, "%.2f", val);
+  return tempFormatBuffer;
+}
+
 void serveAdminIndex() {
   WiFiClient client = adminServer.client();
   String body = "";
@@ -236,6 +241,7 @@ void serveAdminIndex() {
                     <li>Gateway IP: $WIFI_GATEWAY</li>\
                     <li>DNS IP: $WIFI_DNS</li>\
                     <li>Hostname: $WIFI_HOSTNAME</li>\
+                    <li>RSSI: $WIFI_RSSI</li>\
                 </ul>\
                 <h2>Access Point Info</h2>\
                 <ul>\
@@ -275,6 +281,7 @@ void serveAdminIndex() {
   body.replace(F("$WIFI_GATEWAY"), formatIntoTemp(WiFi.gatewayIP()));
   body.replace(F("$WIFI_DNS"), formatIntoTemp(WiFi.dnsIP()));
   body.replace(F("$WIFI_HOSTNAME"), WiFi.hostname());
+  body.replace(F("$WIFI_RSSI"), formatFloatIntoTemp(WiFi.RSSI()));
   body.replace(F("$AP_IP"), formatIntoTemp(WiFi.softAPIP()));
   body.replace(F("$AP_MAC"), WiFi.softAPmacAddress());
   body.replace(F("$AP_NUM_STATIONS"), formatIntoTemp(WiFi.softAPgetStationNum()));
