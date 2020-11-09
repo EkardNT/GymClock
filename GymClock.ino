@@ -488,6 +488,17 @@ void serveUserIndex() {
                 <h2>Actions</h2>\
                 <div><a href='/changeProgram'>Change Program</a></div>\
             </div>\
+            <div>\
+                <h2>WiFi Info</h2>\
+                <ul>\
+                    <li>IP: $WIFI_IP</li>\
+                    <li>Subnet Mask: $WIFI_MASK</li>\
+                    <li>Gateway IP: $WIFI_GATEWAY</li>\
+                    <li>DNS IP: $WIFI_DNS</li>\
+                    <li>Hostname: $WIFI_HOSTNAME</li>\
+                    <li>RSSI: $WIFI_RSSI</li>\
+                </ul>\
+            </div>\
         </body>\
     </html>"));
   switch (currentProgram()) {
@@ -509,6 +520,12 @@ void serveUserIndex() {
     default:
       body.replace(F("$CURRENT_PROGRAM"), F("Unknown"));
   }
+  body.replace(F("$WIFI_IP"), formatIntoTemp(WiFi.localIP()));
+  body.replace(F("$WIFI_MASK"), formatIntoTemp(WiFi.subnetMask()));
+  body.replace(F("$WIFI_GATEWAY"), formatIntoTemp(WiFi.gatewayIP()));
+  body.replace(F("$WIFI_DNS"), formatIntoTemp(WiFi.dnsIP()));
+  body.replace(F("$WIFI_HOSTNAME"), WiFi.hostname());
+  body.replace(F("$WIFI_RSSI"), formatFloatIntoTemp(WiFi.RSSI()));
   userServer.send(200, F("text/html"), body);
 }
 
