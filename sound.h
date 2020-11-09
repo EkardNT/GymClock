@@ -94,12 +94,6 @@ const int NOTE_CS8 = 4435;
 const int NOTE_D8  = 4699;
 const int NOTE_DS8 = 4978;
 
-            // D#6 @ 0 for 1  (1244 Hz)
-            // D#5 @ 2 for 1  (622 Hz)
-            // A#5 @ 3 for 1  (932 Hz)
-            // G#5 @ 6 for 1  (830 Hz)
-            // D#6 @ 10 for 1 (1244 Hz)
-            // A#5 @ 12 for 4 (932 Hz)
 // Melody array has the following schema:
 // <note> <duration> <start>
 // - note is the tone frequency.
