@@ -859,9 +859,9 @@ void serveUserChangeProgramStopwatch() {
             <div><a href='/changeProgram'>Back</a></div>\
             <form method='post' action=''>\
                 <div>\
-                    Beep Interval (leave 0 to disable)\
-                    <label>Minutes <input type='number' name='beepIntervalMinutes' placeholder='0' min='0' max='60'></label>\
-                    <label>Seconds <input type='number' name='beepIntervalSeconds' placeholder='0' min='0' max='60'></label>\
+                    <strong>Beep Interval</strong> (leave 0 to disable)\
+                    <div><label>Minutes <input type='number' name='beepIntervalMinutes' placeholder='0' min='0' max='60'></label></div>\
+                    <div><label>Seconds <input type='number' name='beepIntervalSeconds' placeholder='0' min='0' max='60'></label></div>\
                 </div>\
                 <input type='submit' value='Activate'>\
             </form>\
