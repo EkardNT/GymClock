@@ -721,16 +721,16 @@ void serveUserChangeProgramCountdown() {
                 </div>\
                 <div>\
                     <strong>Set Time</strong>\
-                    <div><label>Minutes <input type='number' name='setDurationMinutes' value='0' min='0' max='60' required></label></div>\
-                    <div><label>Seconds <input type='number' name='setDurationSeconds' value='0' min='0' max='60' required></label></div>\
+                    <div><label>Minutes <input type='number' name='setDurationMinutes' min='0' max='60'></label></div>\
+                    <div><label>Seconds <input type='number' name='setDurationSeconds' placeholder='0' min='0' max='60'></label></div>\
                 </div>\
                 <div>\
                     <strong>Rest Time</strong>\
-                    <div><label>Seconds <input type='number' name='restSeconds' value='0' min='0' max='99' required></label></div>\
+                    <div><label>Seconds <input type='number' name='restSeconds' placeholder='0' min='0' max='99'></label></div>\
                 </div>\
                 <div>\
                     <strong>Preparation Time</strong>\
-                    <div><label>Seconds <input type='number' name='readySeconds' value='10' min='0' max='10' required></label></div>\
+                    <div><label>Seconds <input type='number' name='readySeconds' value='5' min='0' max='10' required></label></div>\
                 </div>\
                 <input type='submit' value='Activate'>\
             </form>\
@@ -744,11 +744,17 @@ void serveUserChangeProgramCountdownSubmit() {
   readySeconds = constrain(readySeconds, 0, 10);
   int sets = userServer.arg(F("sets")).toInt();
   sets = constrain(sets, 1, 99);
-  unsigned long setDurationMinutes = userServer.arg(F("setDurationMinutes")).toInt();
+  unsigned long setDurationMinutes = userServer.hasArg(F("setDurationMinutes"))
+    ? userServer.arg(F("setDurationMinutes")).toInt()
+    : 0;
   setDurationMinutes = constrain(setDurationMinutes, 0, 60);
-  unsigned long setDurationSeconds = userServer.arg(F("setDurationSeconds")).toInt();
+  unsigned long setDurationSeconds = userServer.hasArg(F("setDurationSeconds"))
+    ? userServer.arg(F("setDurationSeconds")).toInt()
+    : 0;
   setDurationSeconds = constrain(setDurationSeconds, 0, 60);
-  unsigned long restSeconds = userServer.arg(F("restSeconds")).toInt();
+  unsigned long restSeconds = userServer.hasArg(F("restSeconds"))
+    ? userServer.arg(F("restSeconds")).toInt()
+    : 0;
   restSeconds = constrain(restSeconds, 0, 99);
 
   unsigned long setDurationMillis = setDurationMinutes * MILLIS_PER_MINUTE
@@ -810,8 +816,8 @@ void serveUserChangeProgramStopwatch() {
             <form method='post' action=''>\
                 <div>\
                     Beep Interval (leave 0 to disable)\
-                    <label>Minutes <input type='number' name='beepIntervalMinutes' value='0' min='0' max='60' required></label>\
-                    <label>Seconds <input type='number' name='beepIntervalSeconds' value='0' min='0' max='60' required></label>\
+                    <label>Minutes <input type='number' name='beepIntervalMinutes' placeholder='0' min='0' max='60'></label>\
+                    <label>Seconds <input type='number' name='beepIntervalSeconds' placeholder='0' min='0' max='60'></label>\
                 </div>\
                 <input type='submit' value='Activate'>\
             </form>\
@@ -821,9 +827,13 @@ void serveUserChangeProgramStopwatch() {
 }
 
 void serveUserChangeProgramStopwatchSubmit() {
-  unsigned long beepIntervalMinutes = userServer.arg(F("beepIntervalMinutes")).toInt();
+  unsigned long beepIntervalMinutes = userServer.hasArg(F("beepIntervalMinutes"))
+    ? userServer.arg(F("beepIntervalMinutes")).toInt()
+    : 0;
   beepIntervalMinutes = constrain(beepIntervalMinutes, 0, 60);
-  unsigned long beepIntervalSeconds = userServer.arg(F("beepIntervalSeconds")).toInt();
+  unsigned long beepIntervalSeconds = userServer.hasArg(F("beepIntervalSeconds"))
+    ? userServer.arg(F("beepIntervalSeconds")).toInt()
+    : 0;
   beepIntervalSeconds = constrain(beepIntervalSeconds, 0, 60);
 
   unsigned long beepIntervalMillis = beepIntervalMinutes * MILLIS_PER_MINUTE
