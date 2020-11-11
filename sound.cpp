@@ -1,5 +1,6 @@
 #include "sound.h"
 #include "common.h"
+#include "debug.h"
 
 using namespace ace_routine;
 
@@ -8,7 +9,7 @@ int SoundRoutine::runCoroutine() {
     static int elapsedMillis = 0;
     COROUTINE_LOOP() {
         COROUTINE_AWAIT(this->checkAndClearInterrupt());
-        Serial.printf("Sound coroutine starting sound %d\r\n", this->currentSound);
+        Debug.printf("Sound coroutine starting sound %d\r\n", this->currentSound);
         noteOffset = 0;
         elapsedMillis = 0;
         while (true) {
@@ -49,7 +50,7 @@ bool SoundRoutine::checkAndClearInterrupt() {
 }
 
 void SoundRoutine::playSound(const int *sound) {
-    Serial.printf("Playing sound %d\r\n", sound);
+    Debug.printf("Playing sound %d\r\n", sound);
     this->currentSound = sound;
     this->generation++;
 }

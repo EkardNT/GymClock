@@ -109,6 +109,17 @@ have had the patience to do otherwise (and much quicker too!).
 
 If you're ok with pulling the sign down, you can flash the esp8266 via the usb port as normal. The sketch also supports wireless flashing of signed binaries. The public key for the signing is the [public.key](public.key) file in this repo. The private key is on my laptop. I'll also store a copy of the private key in a USB drive and put the drive inside the sign itself.
 
+## How to debug
+
+I created a [Debug](debug.h) class as a wrapper around the Serial class which has the ability
+to redirect debug print statements via UDP packets to some UDP address on the network. This
+means that you can view Serial/debug statements without needing to be plugged in to the ESP8266's
+USB port! I also created the [udp_listener](https://github.com/EkardNT/udp_listener) utility
+program as an easy way of viewing the broadcast UDP debug info on your terminal.
+
+UDP debug redirection is disabled by default. It can be toggled on or off from the user or admin
+index pages.
+
 ## Errata
 
 I had a bug in the DigitController2 schematic that I didn't catch until after I had the PCBs manufactured. The bug was that the SER and SRCLK lines are swapped. I fixed the bug in the schematic, but did not order new PCBs because I was able to work around the bug by simply swapping the SER and SRCLK wiring lines from the central controller to the main bus.

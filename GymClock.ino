@@ -7,11 +7,13 @@
 #include <ESP8266HTTPUpdateServer.h>
 #include <NTPClient.h>
 #include <WiFiUdp.h>
+#include <IPAddress.h>
 #include <AceRoutine.h>
 #include <AceTime.h>
 #include "common.h"
 #include "programs.h"
 #include "sound.h"
+#include "debug.h"
 
 using namespace ace_routine;
 using namespace ace_time;
@@ -76,10 +78,10 @@ void setup() {
   WiFi.setAutoConnect(false);
   WiFi.setAutoReconnect(true);
   if (strlen(wifiSSID) > 0 && strlen(wifiPassword) > 0) {
-    Serial.printf("Trying to log on to WiFi network %s in station mode.\n", wifiSSID);
+    Debug.printf("Trying to log on to WiFi network %s in station mode.\n", wifiSSID);
     WiFi.begin(wifiSSID, wifiPassword);
   } else {
-    Serial.println("One or more of wifiSSID or wifiPassword not available from EEPROM, not logging on to any network yet.");
+    Debug.println("One or more of wifiSSID or wifiPassword not available from EEPROM, not logging on to any network yet.");
   }
 
   dnsServer.start(53, F("gymclock.local"), AP_LOCAL_IP);
@@ -89,6 +91,10 @@ void setup() {
   adminServer.on(F("/rebootSubmit"), HTTP_POST, serveAdminRebootSubmit);
   adminServer.on(F("/changeWiFi"), HTTP_GET, serveAdminChangeWiFi);
   adminServer.on(F("/changeWiFiSubmit"), HTTP_POST, serveAdminChangeWiFiSubmit);
+  adminServer.on(F("/enableUdpDebug"), HTTP_GET, serveAdminEnableUdpDebug);
+  adminServer.on(F("/enableUdpDebug"), HTTP_POST, serveAdminEnableUdpDebugSubmit);
+  adminServer.on(F("/disableUdpDebug"), HTTP_GET, serveAdminDisableUdpDebug);
+  adminServer.on(F("/disableUdpDebug"), HTTP_POST, serveAdminDisableUdpDebugSubmit);
   adminServer.begin();
 
   // Unfortunately the NTP/UDP request is apparently implemented as a blocking call, so it causes a noticable flicker.
@@ -114,8 +120,8 @@ void setup() {
   soundRoutine.setupCoroutine(F("sound"));
   CoroutineScheduler::setup();
 
-  Serial.println("Listing coroutines after setup");
-  CoroutineScheduler::list(Serial);
+  Debug.println("Listing coroutines after setup");
+  CoroutineScheduler::list(Debug);
 
   // Suspend every program except the init program. Ideally we would call changeProgram(PROGRAM_INIT)
   // here instead of suspendAll, but that causes a crash reboot loop because AceRoutine has
@@ -123,13 +129,13 @@ void setup() {
   // of suspend/resume calls here. See https://github.com/bxparks/AceRoutine/issues/19
   suspendAll(PROGRAM_INIT);
 
-  Serial.println("Listing coroutines after suspending initial");
-  CoroutineScheduler::list(Serial);
+  Debug.println("Listing coroutines after suspending initial");
+  CoroutineScheduler::list(Debug);
 
 //  auto registrar = zoneManager.getRegistrar();
 //  for (uint16_t i = 0; i < registrar.registrySize(); i++) {
 //    BasicZone zoneInfo = registrar.getZoneInfoForIndex(i);
-//    Serial.printf("Zone %s, short name %s, zone id %d\n", zoneInfo.name(), zoneInfo.shortName(), zoneInfo.zoneId());
+//    Debug.printf("Zone %s, short name %s, zone id %d\n", zoneInfo.name(), zoneInfo.shortName(), zoneInfo.zoneId());
 //  }
 }
 
@@ -154,18 +160,18 @@ void initStoredSettings() {
       wifiSSID[i] = EEPROM.read(SSID_EEPROM_ADDR + i);
     }
   }
-  Serial.printf("SSID size: %d, value: %s\n", strlen(wifiSSID), wifiSSID);
+  Debug.printf("SSID size: %d, value: %s\n", strlen(wifiSSID), wifiSSID);
   byte passwordSize = EEPROM.read(PASSWORD_LEN_EEPROM_ADDR);
   if (passwordSize > 0 && passwordSize <= MAX_PASSWORD_SIZE) {
     for (int i = 0; i < passwordSize; i++) {
       wifiPassword[i] = EEPROM.read(PASSWORD_EEPROM_ADDR + i);
     }
   }
-  Serial.printf("Password size: %d, value: %s\n", strlen(wifiPassword), wifiPassword);
+  Debug.printf("Password size: %d, value: %s\n", strlen(wifiPassword), wifiPassword);
 }
 
 void networkInit(const WiFiEventStationModeGotIP& event) {
-  Serial.println("networkInit");
+  Debug.println("networkInit");
 
   userServer.on(F("/"), HTTP_GET, serveUserIndex);
   userServer.on(F("/changeProgram"), HTTP_GET, serveUserChangeProgram);
@@ -179,6 +185,10 @@ void networkInit(const WiFiEventStationModeGotIP& event) {
   userServer.on(F("/changeProgram/stopwatch"), HTTP_POST, serveUserChangeProgramStopwatchSubmit);
   userServer.on(F("/reboot"), HTTP_GET, serveUserReboot);
   userServer.on(F("/rebootSubmit"), HTTP_POST, serveUserRebootSubmit);
+  userServer.on(F("/enableUdpDebug"), HTTP_GET, serveUserEnableUdpDebug);
+  userServer.on(F("/enableUdpDebug"), HTTP_POST, serveUserEnableUdpDebugSubmit);
+  userServer.on(F("/disableUdpDebug"), HTTP_GET, serveUserDisableUdpDebug);
+  userServer.on(F("/disableUdpDebug"), HTTP_POST, serveUserDisableUdpDebugSubmit);
   userServer.begin();
 
   httpUpdateServer.setup(&webUpdateServer);
@@ -190,7 +200,7 @@ void networkInit(const WiFiEventStationModeGotIP& event) {
 }
 
 void networkStop(const WiFiEventStationModeDisconnected& event) {
-  Serial.println("networkStop");
+  Debug.println("networkStop");
   userServer.stop();
   webUpdateServer.stop();
   timeClient.end();
@@ -236,6 +246,8 @@ void serveAdminIndex() {
                 <h2>Actions</h2>\
                 <div><a href='changeWiFi'>Change WiFi Settings</a></div>\
                 <div><a href='reboot'>Reboot</a></div>\
+                <div $ENABLE_UDP_DEBUG><a href='enableUdpDebug'>Enable UDP Debug</a></div>\
+                <div $DISABLE_UDP_DEBUG><a href='disableUdpDebug'>Disable UDP Debug</a></div>\
                 <h2>Station Info</h2>\
                 <ul>\
                     <li>IP: $WIFI_IP</li>\
@@ -305,6 +317,13 @@ void serveAdminIndex() {
   body.replace(F("$FLASH_REAL_SIZE"), formatIntoTemp(ESP.getFlashChipRealSize()));
   body.replace(F("$FLASH_SPEED"), formatIntoTemp(ESP.getFlashChipSpeed()));
   body.replace(F("$UPTIME"), formatIntoTemp(millis()));
+  if (Debug.isUdpEnabled()) {
+    body.replace(F("$ENABLE_UDP_DEBUG"), F("style='display:none;'"));
+    body.replace(F("$DISABLE_UDP_DEBUG"), F(""));
+  } else {
+    body.replace(F("$ENABLE_UDP_DEBUG"), F(""));
+    body.replace(F("$DISABLE_UDP_DEBUG"), F("style='display:none;'"));
+  }
   adminServer.send(200, F("text/html"), body);
 }
 
@@ -370,7 +389,7 @@ void serveAdminRebootSubmit() {
     </html>"));
   adminServer.send(200, F("text/html"), body);
 
-  Serial.println(F("Rebooting due to admin request"));
+  Debug.println(F("Rebooting due to admin request"));
   delay(100);
   ESP.restart();
 }
@@ -464,6 +483,22 @@ void serveAdminChangeWiFiSubmit() {
   adminServer.send(200, F("text/html"), body);
 }
 
+void serveAdminEnableUdpDebug() {
+  serveSharedEnableUdpDebug(adminServer, F("GymClock Admin"));
+}
+
+void serveAdminEnableUdpDebugSubmit() {
+  serveSharedEnableUdpDebugSubmit(adminServer, F("GymClock Admin"));
+}
+
+void serveAdminDisableUdpDebug() {
+  serveSharedDisableUdpDebug(adminServer, F("GymClock Admin"));
+}
+
+void serveAdminDisableUdpDebugSubmit() {
+  serveSharedDisableUdpDebugSubmit(adminServer, F("GymClock Admin"));
+}
+
 void serveUserIndex() {
   WiFiClient client = userServer.client();
   String body = "";
@@ -502,8 +537,10 @@ void serveUserIndex() {
                 </ul>\
             </div>\
             <div>\
-                <h2>Reboot</h2>\
+                <h2>Debug</h2>\
                 <div><a href='/reboot'>Reboot Sign</a></div>\
+                <div $ENABLE_UDP_DEBUG><a href='/enableUdpDebug'>Enable UDB Debug</a></div>\
+                <div $DISABLE_UDP_DEBUG><a href='/disableUdpDebug'>Disable UDB Debug</a></div>\
             </div>\
         </body>\
     </html>"));
@@ -532,6 +569,13 @@ void serveUserIndex() {
   body.replace(F("$WIFI_DNS"), formatIntoTemp(WiFi.dnsIP()));
   body.replace(F("$WIFI_HOSTNAME"), WiFi.hostname());
   body.replace(F("$WIFI_RSSI"), formatFloatIntoTemp(WiFi.RSSI()));
+  if (Debug.isUdpEnabled()) {
+    body.replace(F("$ENABLE_UDP_DEBUG"), F("style='display:none;'"));
+    body.replace(F("$DISABLE_UDP_DEBUG"), F(""));
+  } else {
+    body.replace(F("$ENABLE_UDP_DEBUG"), F(""));
+    body.replace(F("$DISABLE_UDP_DEBUG"), F("style='display:none;'"));
+  }
   userServer.send(200, F("text/html"), body);
 }
 
@@ -896,7 +940,7 @@ void serveUserReboot() {
             </div>\
         </body>\
     </html>"));
-  adminServer.send(200, F("text/html"), body);
+  userServer.send(200, F("text/html"), body);
 }
 
 void serveUserRebootSubmit() {
@@ -925,11 +969,171 @@ void serveUserRebootSubmit() {
             </div>\
         </body>\
     </html>"));
-  adminServer.send(200, F("text/html"), body);
+  userServer.send(200, F("text/html"), body);
 
-  Serial.println(F("Rebooting due to user request"));
+  Debug.println(F("Rebooting due to user request"));
   delay(100);
   ESP.restart();
+}
+
+void serveUserEnableUdpDebug() {
+  serveSharedEnableUdpDebug(userServer, F("GymClock"));
+}
+
+void serveUserEnableUdpDebugSubmit() {
+  serveSharedEnableUdpDebugSubmit(userServer, F("GymClock"));
+}
+
+void serveUserDisableUdpDebug() {
+  serveSharedDisableUdpDebug(userServer, F("GymClock"));
+}
+
+void serveUserDisableUdpDebugSubmit() {
+  serveSharedDisableUdpDebugSubmit(userServer, F("GymClock"));
+}
+
+void serveSharedEnableUdpDebug(ESP8266WebServer & server, const __FlashStringHelper * title) {
+  WiFiClient client = server.client();
+  String body = "";
+  body.reserve(2048);
+  body.concat(F("\
+      <html>\
+        <head>\
+            <title>$TITLE</title>\
+            <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+            <style>\
+                .nav {\
+                    background-color: black;\
+                    color: white;\
+                }\
+            </style>\
+        </head>\
+        <body>\
+            <nav class='nav'>\
+                <h1>$TITLE</h1>\
+            </nav>\
+            <div>\
+                <h2>Enable UDP Debug</h2>\
+                <form action='' method='post'>\
+                    <p>Enter the IP Address and port that the UDP listener is bound to.<p>\
+                    <div><label>IP <input type='text' name='debugIp' placeholder='192.168.0.XXX' required></label></div>\
+                    <div><label>Port <input type='text' name='debugPort' placeholder='1024-65535' required></label></div>\
+                    <input type='submit' value='Enable'>\
+                </form>\
+            </div>\
+        </body>\
+    </html>"));
+  body.replace(F("$TITLE"), title);
+  server.send(200, F("text/html"), body);
+}
+
+void serveSharedEnableUdpDebugSubmit(ESP8266WebServer & server, const __FlashStringHelper * title) {
+  String debugIpText = server.arg(F("debugIp"));
+  IPAddress debugIp;
+  if (!debugIp.fromString(debugIpText)) {
+    server.send(400, F("text/plain"), F("Invalid IP"));
+    return;
+  }
+  int debugPort = server.arg(F("debugPort")).toInt();
+  debugPort = constrain(debugPort, 1024, 65535);
+
+  Debug.enableUdp(debugIp, debugPort);
+  Debug.println("UDP Debug enabled");
+
+  WiFiClient client = server.client();
+  String body = "";
+  body.reserve(2048);
+  body.concat(F("\
+      <html>\
+        <head>\
+            <title>$TITLE</title>\
+            <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+            <meta http-equiv='refresh' content='3;url=/'>\
+            <style>\
+                .nav {\
+                    background-color: green;\
+                    color: white;\
+                }\
+            </style>\
+        </head>\
+        <body>\
+            <nav class='nav'>\
+                <h1>$TITLE</h1>\
+            </nav>\
+            <div>\
+                <h2>Success</h2>\
+                <p>UDP debug has been enabled.</p>\
+            </div>\
+        </body>\
+    </html>"));
+  body.replace(F("$TITLE"), title);
+  server.send(200, F("text/html"), body);
+}
+
+void serveSharedDisableUdpDebug(ESP8266WebServer & server, const __FlashStringHelper * title) {
+  WiFiClient client = server.client();
+  String body = "";
+  body.reserve(2048);
+  body.concat(F("\
+      <html>\
+        <head>\
+            <title>$TITLE</title>\
+            <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+            <style>\
+                .nav {\
+                    background-color: black;\
+                    color: white;\
+                }\
+            </style>\
+        </head>\
+        <body>\
+            <nav class='nav'>\
+                <h1>$TITLE</h1>\
+            </nav>\
+            <div>\
+                <h2>Disable UDP Debug</h2>\
+                <form action='' method='post'>\
+                    <p>If you click Disable below then UDP debug will be disabled.<p>\
+                    <input type='submit' value='Disable'>\
+                </form>\
+            </div>\
+        </body>\
+    </html>"));
+  server.send(200, F("text/html"), body);
+}
+
+void serveSharedDisableUdpDebugSubmit(ESP8266WebServer & server, const __FlashStringHelper * title) {
+  Debug.disableUdp();
+  Debug.println("UDP Debug disabled");
+
+  WiFiClient client = server.client();
+  String body = "";
+  body.reserve(2048);
+  body.concat(F("\
+      <html>\
+        <head>\
+            <title>$TITLE</title>\
+            <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+            <meta http-equiv='refresh' content='3;url=/'>\
+            <style>\
+                .nav {\
+                    background-color: green;\
+                    color: white;\
+                }\
+            </style>\
+        </head>\
+        <body>\
+            <nav class='nav'>\
+                <h1>$TITLE</h1>\
+            </nav>\
+            <div>\
+                <h2>Success</h2>\
+                <p>UDP debug has been disabled.</p>\
+            </div>\
+        </body>\
+    </html>"));
+  body.replace(F("$TITLE"), title);
+  server.send(200, F("text/html"), body);
 }
 
 void updateWiFiSettings(String newSSID, String newPassword) {
@@ -938,21 +1142,21 @@ void updateWiFiSettings(String newSSID, String newPassword) {
   byte ssidLen = newSSID.length();
   if (ssidLen > MAX_SSID_SIZE) {
     ssidLen = MAX_SSID_SIZE;
-    Serial.println(F("Truncating new SSID to MAX_SSID_SIZE"));
+    Debug.println(F("Truncating new SSID to MAX_SSID_SIZE"));
   }
-  Serial.print(F("New SSID length is "));
-  Serial.println(ssidLen);
-  Serial.print(F("New SSID is "));
-  Serial.println(wifiSSID);
+  Debug.print(F("New SSID length is "));
+  Debug.println(ssidLen);
+  Debug.print(F("New SSID is "));
+  Debug.println(wifiSSID);
   byte passwordLen = newPassword.length();
   if (passwordLen > MAX_PASSWORD_SIZE) {
     passwordLen = MAX_PASSWORD_SIZE;
-    Serial.println(F("Truncating new password to MAX_PASSWORD_SIZE"));
+    Debug.println(F("Truncating new password to MAX_PASSWORD_SIZE"));
   }
-  Serial.print(F("New password length is "));
-  Serial.println(passwordLen);
-  Serial.print(F("New password is "));
-  Serial.println(wifiPassword);
+  Debug.print(F("New password length is "));
+  Debug.println(passwordLen);
+  Debug.print(F("New password is "));
+  Debug.println(wifiPassword);
   EEPROM.write(SSID_LEN_EEPROM_ADDR, ssidLen);
   for (int i = 0; i < ssidLen; i++) {
     EEPROM.write(SSID_EEPROM_ADDR + i, wifiSSID[i]);
@@ -969,10 +1173,10 @@ void updateWiFiSettings(String newSSID, String newPassword) {
   }
   EEPROM.commit();
 
-  Serial.println("Disconnecting WiFi.");
+  Debug.println("Disconnecting WiFi.");
   WiFi.disconnect(false);
   if (strlen(wifiSSID) > 0 && strlen(wifiPassword) > 0) {
-    Serial.println("Beginning WiFi.");
+    Debug.println("Beginning WiFi.");
     WiFi.begin(wifiSSID, wifiPassword);
   }
 }

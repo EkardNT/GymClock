@@ -3,6 +3,7 @@
 #include "programs.h"
 #include "common.h"
 #include "sound.h"
+#include "debug.h"
 
 using namespace ace_routine;
 
@@ -19,41 +20,47 @@ void changeProgram(int newProgram) {
     suspendAll(newProgram);
     switch (newProgram) {
         case PROGRAM_INIT:
+            Debug.println("Changing to PROGRAM_INIT");
             initProgramCo.reset();
             if (initProgramCo.isSuspended()) {
                 initProgramCo.resume();
             }
             break;
         case PROGRAM_TEST:
+            Debug.println("Changing to PROGRAM_TEST");
             testProgramCo.reset();
             if (testProgramCo.isSuspended()) {
                 testProgramCo.resume();
             }
             break;
         case PROGRAM_CLOCK:
+            Debug.println("Changing to PROGRAM_CLOCK");
             clockProgramCo.reset();
             if (clockProgramCo.isSuspended()) {
                 clockProgramCo.resume();
             }
             break;
         case PROGRAM_COUNTDOWN:
+            Debug.println("Changing to PROGRAM_COUNTDOWN");
             countdownCo.reset();
             if (countdownCo.isSuspended()) {
                 countdownCo.resume();
             }
             break;
         case PROGRAM_STOPWATCH:
+            Debug.println("Changing to PROGRAM_STOPWATCH");
             stopwatchProgram.reset();
             if (stopwatchProgram.isSuspended()) {
                 stopwatchProgram.resume();
             }
             break;
         default:
-            Serial.println("ERROR: cannot change to unknown program!");
+            Debug.println("ERROR: cannot change to unknown program!");
     }
 }
 
 void suspendAll(int exceptProgram) {
+    Debug.printf("Suspending all programs except %d\r\n", exceptProgram);
     if (exceptProgram != PROGRAM_INIT) {
         initProgramCo.suspend();
     }
@@ -73,7 +80,7 @@ void suspendAll(int exceptProgram) {
 
 int TestProgramCo::runCoroutine() {
     COROUTINE_LOOP() {
-        Serial.println("Test program showing TEST");
+        Debug.println("Test program showing TEST");
         for (int i = 0; i < NUM_DIGITS; i++) {
             updateDigit(i, ' ');
         }
@@ -90,14 +97,14 @@ int TestProgramCo::runCoroutine() {
         tone(tonePin, NOTE_G4, 500);
         COROUTINE_DELAY(1500);
 
-        Serial.println("Test program showing 0-9");
+        Debug.println("Test program showing 0-9");
         for (int i = 0; i < NUM_DIGITS; i++) {
             updateDigit(i, '0' + i);
         }
 
         COROUTINE_DELAY(2000);
 
-        Serial.println("Test program showing all 8s");
+        Debug.println("Test program showing all 8s");
         for (int i = 0; i < NUM_DIGITS; i++) {
             updateDigit(i, '8');
         }
@@ -108,6 +115,7 @@ int TestProgramCo::runCoroutine() {
 
 int InitProgramCo::runCoroutine() {
     COROUTINE_BEGIN();
+    Debug.println("Start of Init program");
 
     clearDisplay();
     updateDigit(0, 'H');
@@ -127,10 +135,11 @@ int InitProgramCo::runCoroutine() {
         updateDigit(3, 'N');
         updateDigit(4, 'E');
         updateDigit(5, 'T');
+        Debug.println("Waiting until network active");
         COROUTINE_AWAIT(networkActive);
     }
 
-    Serial.println("Net on in InitProgramCo");
+    Debug.println("Net on in InitProgramCo");
     clearDisplay();
     updateDigit(0, 'N');
     updateDigit(1, 'E');
@@ -141,21 +150,12 @@ int InitProgramCo::runCoroutine() {
 
     changeProgram(PROGRAM_CLOCK);
 
+    Debug.println("End of Init program");
     COROUTINE_END();
 }
 
 int ClockProgramCo::runCoroutine() {
     COROUTINE_LOOP() {
-        if (!networkActive) {
-            clearDisplay();
-            updateDigit(0, 'N');
-            updateDigit(1, 'O');
-            updateDigit(3, 'N');
-            updateDigit(4, 'T');
-            updateDigit(5, 'P');
-            COROUTINE_AWAIT(networkActive);
-        }
-
         unsigned long unixEpochSeconds = timeClient.getEpochTime();
         ace_time::TimeZone localTz = zoneManager.createForZoneInfo(&ace_time::zonedb::kZoneAmerica_Los_Angeles);
         ace_time::ZonedDateTime localTime = ace_time::ZonedDateTime::forUnixSeconds(unixEpochSeconds, localTz);
@@ -179,22 +179,23 @@ int ClockProgramCo::runCoroutine() {
 
 void printlnStatus(Coroutine *co) {
     if (co->isSuspended()) {
-        Serial.println("suspended");
+        Debug.println("suspended");
     } else if (co->isYielding()) {
-        Serial.println("yielding");
+        Debug.println("yielding");
     } else if (co->isDelaying()) {
-        Serial.println("delaying");
+        Debug.println("delaying");
     } else if (co->isRunning()) {
-        Serial.println("running");
+        Debug.println("running");
     } else if (co->isEnding()) {
-        Serial.println("ending");
+        Debug.println("ending");
     } else if (co->isTerminated()) {
-        Serial.println("terminated");
+        Debug.println("terminated");
     }
 }
 
 int CountdownCo::runCoroutine() {
     COROUTINE_BEGIN();
+    Debug.println("Start of Countdown program");
 
     // Do an initial countdown before the first set.
     while (this->readySeconds > 0) {
@@ -213,6 +214,7 @@ int CountdownCo::runCoroutine() {
 
     // Count down the sets.
     while (this->sets > 0) {
+        Debug.printf("Starting set %d\r\n", this->sets);
         clearDisplay();
         updateDigit(0, 'S');
         updateDigit(1, 'T');
@@ -258,6 +260,7 @@ int CountdownCo::runCoroutine() {
         // one-second intervals. The remaining rest time is shown in the lower right digit
         // pair.
         if (this->sets > 0 && this->restSeconds > 0) {
+            Debug.println("Entering rest period");
             soundRoutine.playSound(SOUND_START_REST);
 
             // TODO: play sound too
@@ -277,6 +280,7 @@ int CountdownCo::runCoroutine() {
         }
     }
 
+    Debug.println("Flashing done for countdown");
     static int doneCounter;
     for (doneCounter = 0; doneCounter < 5; doneCounter++) {
         clearDisplay();
@@ -294,11 +298,13 @@ int CountdownCo::runCoroutine() {
 
     changeProgram(PROGRAM_CLOCK);
 
+    Debug.println("End of Countdown program");
     COROUTINE_END();
 }
 
 int StopwatchProgram::runCoroutine() {
     COROUTINE_BEGIN();
+    Debug.println("Start of Stopwatch program");
 
     clearDisplay();
 
@@ -320,6 +326,7 @@ int StopwatchProgram::runCoroutine() {
         // Loop around once we exceed 99 hours.
         if (hoursPart > 99) {
             this->startMillis = millis();
+            Debug.println("Stopwatch looped");
             continue;
         }
 
@@ -347,5 +354,6 @@ int StopwatchProgram::runCoroutine() {
         }
     }
 
+    Debug.println("End of Stopwatch program");
     COROUTINE_END();
 }
