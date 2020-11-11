@@ -765,7 +765,7 @@ void serveUserChangeProgramCountdown() {
                 </div>\
                 <div>\
                     <strong>Set Time</strong>\
-                    <div><label>Minutes <input type='number' name='setDurationMinutes' min='0' max='60'></label></div>\
+                    <div><label>Minutes <input type='number' name='setDurationMinutes' placeholder='0 min='0' max='60'></label></div>\
                     <div><label>Seconds <input type='number' name='setDurationSeconds' placeholder='0' min='0' max='60'></label></div>\
                 </div>\
                 <div>\
