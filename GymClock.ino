@@ -193,6 +193,10 @@ void networkInit(const WiFiEventStationModeGotIP& event) {
   userServer.on(F("/enableUdpDebug"), HTTP_POST, serveUserEnableUdpDebugSubmit);
   userServer.on(F("/disableUdpDebug"), HTTP_GET, serveUserDisableUdpDebug);
   userServer.on(F("/disableUdpDebug"), HTTP_POST, serveUserDisableUdpDebugSubmit);
+  userServer.on(F("/scoredCountdownIncrementLeft"), HTTP_GET, serveUserScoredCountdownIncrementLeft);
+  userServer.on(F("/scoredCountdownIncrementRight"), HTTP_GET, serveUserScoredCountdownIncrementRight);
+  userServer.on(F("/scoredCountdownDecrementLeft"), HTTP_GET, serveUserScoredCountdownDecrementLeft);
+  userServer.on(F("/scoredCountdownDecrementRight"), HTTP_GET, serveUserScoredCountdownDecrementRight);
   userServer.begin();
 
   httpUpdateServer.setup(&webUpdateServer);
@@ -524,6 +528,12 @@ void serveUserIndex() {
             <div>\
                 <h2>Current Program</h2>\
                 <p>Program: <strong>$CURRENT_PROGRAM</strong></p>\
+                <div $SCORED_COUNTDOWN_DISPLAY>\
+                    <a href='/scoredCountdownIncrementLeft'>+ Left Score</a>\
+                    <a href='/scoredCountdownIncrementRight'>+ Right Score</a>\
+                    <a href='/scoredCountdownDecrementLeft'>- Left Score</a>\
+                    <a href='/scoredCountdownDecrementRight'>- Right Score</a>\
+                </div>\
             </div>\
             <div>\
                 <h2>Actions</h2>\
@@ -564,6 +574,9 @@ void serveUserIndex() {
     case PROGRAM_STOPWATCH:
       body.replace(F("$CURRENT_PROGRAM"), F("Stopwatch"));
       break;
+    case PROGRAM_SCORED_COUNTDOWN:
+      body.replace(F("$CURRENT_PROGRAM"), F("Scored Countdown"));
+      break;
     default:
       body.replace(F("$CURRENT_PROGRAM"), F("Unknown"));
   }
@@ -579,6 +592,11 @@ void serveUserIndex() {
   } else {
     body.replace(F("$ENABLE_UDP_DEBUG"), F(""));
     body.replace(F("$DISABLE_UDP_DEBUG"), F("style='display:none;'"));
+  }
+  if (currentProgram() == PROGRAM_SCORED_COUNTDOWN) {
+    body.replace(F("$SCORED_COUNTDOWN_DISPLAY"), F(""));
+  } else {
+    body.replace(F("$SCORED_COUNTDOWN_DISPLAY"), F("style='display:none;'"));
   }
   userServer.send(200, F("text/html"), body);
 }
@@ -1095,6 +1113,34 @@ void serveUserDisableUdpDebug() {
 
 void serveUserDisableUdpDebugSubmit() {
   serveSharedDisableUdpDebugSubmit(userServer, F("GymClock"));
+}
+
+void serveUserScoredCountdownIncrementLeft() {
+  if (scoredCountdownProgram.leftScore < 99) {
+    scoredCountdownProgram.leftScore += 1;
+  }
+  serveUserIndex();
+}
+
+void serveUserScoredCountdownIncrementRight() {
+  if (scoredCountdownProgram.rightScore < 99) {
+    scoredCountdownProgram.rightScore += 1;
+  }
+  serveUserIndex();
+}
+
+void serveUserScoredCountdownDecrementLeft() {
+  if (scoredCountdownProgram.leftScore > 0) {
+    scoredCountdownProgram.leftScore -= 1;
+  }
+  serveUserIndex();
+}
+
+void serveUserScoredCountdownDecrementRight() {
+  if (scoredCountdownProgram.rightScore > 0) {
+    scoredCountdownProgram.rightScore -= 1;
+  }
+  serveUserIndex();
 }
 
 void serveSharedEnableUdpDebug(ESP8266WebServer & server, const __FlashStringHelper * title) {
