@@ -68,7 +68,9 @@ class ScoredCountdownProgram : public ace_routine::Coroutine {
         int leftScore = 0;
         int rightScore = 0;
         int readySeconds = 0;
-        unsigned long durationMillis;
+        unsigned long durationMillis = 0;
+        unsigned long ageMillis = 0;
+        unsigned long startMillis = 0;
 };
 
 extern TestProgram testProgram;

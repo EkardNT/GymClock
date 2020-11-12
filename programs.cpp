@@ -257,8 +257,8 @@ int CountdownProgram::runCoroutine() {
             unsigned long now = millis();
             // Just make sure the clock never goes backwards. This could probably never happen
             // on a single-core machine anyways but can't hurt to guard against it.
-            if (now < startMillis) {
-                now = startMillis;
+            if (now < this->startMillis) {
+                now = this->startMillis;
             }
             this->ageMillis = now - this->startMillis;
         }
@@ -385,6 +385,64 @@ int ScoredCountdownProgram::runCoroutine() {
 
         COROUTINE_DELAY(1000);
         this->readySeconds -= 1;
+    }
+
+    soundRoutine.playSound(SOUND_START_SET);
+
+    this->startMillis = millis();
+    this->ageMillis = 0;
+
+    // Count down the duration.
+    while (this->ageMillis < this->durationMillis) {
+        unsigned long remainingMillis = this->durationMillis - this->ageMillis;
+        unsigned long hoursPart = remainingMillis / MILLIS_PER_HOUR;
+        remainingMillis -= hoursPart * MILLIS_PER_HOUR;
+        unsigned long minutesPart = remainingMillis / MILLIS_PER_MINUTE;
+        remainingMillis -= minutesPart * MILLIS_PER_MINUTE;
+        unsigned long secondsPart = remainingMillis / MILLIS_PER_SECOND;
+        remainingMillis -= secondsPart * MILLIS_PER_SECOND;
+        unsigned long decisecondsPart = remainingMillis / 10;
+
+        clearDisplay();
+        if (hoursPart > 0) {
+            show2DigitNumber(hoursPart, 0);
+            show2DigitNumber(minutesPart, 2);
+            show2DigitNumber(secondsPart, 4);
+            show2DigitNumber(this->leftScore, 6);
+            show2DigitNumber(this->rightScore, 8);
+            COROUTINE_DELAY(250);
+        } else {
+            show2DigitNumber(minutesPart, 0);
+            show2DigitNumber(secondsPart, 2);
+            show2DigitNumber(decisecondsPart, 4);
+            show2DigitNumber(this->leftScore, 6);
+            show2DigitNumber(this->rightScore, 8);
+            COROUTINE_DELAY(75);
+        }
+
+        unsigned long now = millis();
+        // Just make sure the clock never goes backwards. This could probably never happen
+        // on a single-core machine anyways but can't hurt to guard against it.
+        if (now < this->startMillis) {
+            now = this->startMillis;
+        }
+        this->ageMillis = now - this->startMillis;
+    }
+
+    Debug.println("Flashing done for ScoredCountdown");
+    static int doneCounter;
+    for (doneCounter = 0; doneCounter < 5; doneCounter++) {
+        clearDisplay();
+        updateDigit(1, 'D');
+        updateDigit(2, 'O');
+        updateDigit(3, 'N');
+        updateDigit(4, 'E');
+        show2DigitNumber(0, 6);
+
+        COROUTINE_DELAY(1000);
+        clearDisplay();
+        show2DigitNumber(0, 6);
+        COROUTINE_DELAY(750);
     }
 
     changeProgram(PROGRAM_CLOCK);
