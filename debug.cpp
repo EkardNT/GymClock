@@ -1,6 +1,8 @@
 #include <Arduino.h>
+#include <AceRoutine.h>
 #include "common.h"
 #include "debug.h"
+#include "programs.h"
 
 DebugPrint Debug;
 
@@ -76,4 +78,39 @@ void DebugPrint::disableUdp() {
 
 bool DebugPrint::isUdpEnabled() {
     return this->udpEnabled;
+}
+
+void printlnStatus(ace_routine::Coroutine *co) {
+    if (co->isSuspended()) {
+        Debug.println("suspended");
+    } else if (co->isYielding()) {
+        Debug.println("yielding");
+    } else if (co->isDelaying()) {
+        Debug.println("delaying");
+    } else if (co->isRunning()) {
+        Debug.println("running");
+    } else if (co->isEnding()) {
+        Debug.println("ending");
+    } else if (co->isTerminated()) {
+        Debug.println("terminated");
+    }
+}
+
+void DebugPrint::dump() {
+    Debug.println(F("================ State Dump ================"));
+    Debug.println(F("----- CoroutineScheduler::list results -----"));
+    ace_routine::CoroutineScheduler::list(Debug);
+    Debug.println(F("------------- Coroutine states -------------"));
+    Debug.print(F("Init: "));
+    printlnStatus(&initProgram);
+    Debug.print(F("Test: "));
+    printlnStatus(&testProgram);
+    Debug.print(F("Clock: "));
+    printlnStatus(&clockProgram);
+    Debug.print(F("Stopwatch: "));
+    printlnStatus(&stopwatchProgram);
+    Debug.print(F("Countdown: "));
+    printlnStatus(&countdownProgram);
+    Debug.print(F("Scored Countdown: "));
+    printlnStatus(&scoredCountdownProgram);
 }

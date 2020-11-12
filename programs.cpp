@@ -186,22 +186,6 @@ int ClockProgram::runCoroutine() {
     }
 }
 
-void printlnStatus(Coroutine *co) {
-    if (co->isSuspended()) {
-        Debug.println("suspended");
-    } else if (co->isYielding()) {
-        Debug.println("yielding");
-    } else if (co->isDelaying()) {
-        Debug.println("delaying");
-    } else if (co->isRunning()) {
-        Debug.println("running");
-    } else if (co->isEnding()) {
-        Debug.println("ending");
-    } else if (co->isTerminated()) {
-        Debug.println("terminated");
-    }
-}
-
 int CountdownProgram::runCoroutine() {
     COROUTINE_BEGIN();
     Debug.println("Start of Countdown program");

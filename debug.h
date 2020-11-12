@@ -14,6 +14,7 @@ class DebugPrint : public Print {
         void enableUdp(IPAddress debugIp, uint16_t debugPort);
         void disableUdp();
         bool isUdpEnabled();
+        void dump();
 
     private:
         bool udpEnabled = false;

@@ -96,6 +96,7 @@ void setup() {
   adminServer.on(F("/enableUdpDebug"), HTTP_POST, serveAdminEnableUdpDebugSubmit);
   adminServer.on(F("/disableUdpDebug"), HTTP_GET, serveAdminDisableUdpDebug);
   adminServer.on(F("/disableUdpDebug"), HTTP_POST, serveAdminDisableUdpDebugSubmit);
+  adminServer.on(F("/debugDump"), HTTP_GET, serveAdminDebugDump);
   adminServer.begin();
 
   // Unfortunately the NTP/UDP request is apparently implemented as a blocking call, so it causes a noticable flicker.
@@ -197,6 +198,7 @@ void networkInit(const WiFiEventStationModeGotIP& event) {
   userServer.on(F("/scoredCountdownIncrementRight"), HTTP_GET, serveUserScoredCountdownIncrementRight);
   userServer.on(F("/scoredCountdownDecrementLeft"), HTTP_GET, serveUserScoredCountdownDecrementLeft);
   userServer.on(F("/scoredCountdownDecrementRight"), HTTP_GET, serveUserScoredCountdownDecrementRight);
+  userServer.on(F("/debugDump"), HTTP_GET, serveUserDebugDump);
   userServer.begin();
 
   httpUpdateServer.setup(&webUpdateServer);
@@ -256,6 +258,7 @@ void serveAdminIndex() {
                 <div><a href='reboot'>Reboot</a></div>\
                 <div $ENABLE_UDP_DEBUG><a href='enableUdpDebug'>Enable UDP Debug</a></div>\
                 <div $DISABLE_UDP_DEBUG><a href='disableUdpDebug'>Disable UDP Debug</a></div>\
+                <div><a href='debugDump'>Dump to Debug</a></div>\
                 <h2>Station Info</h2>\
                 <ul>\
                     <li>IP: $WIFI_IP</li>\
@@ -507,6 +510,11 @@ void serveAdminDisableUdpDebugSubmit() {
   serveSharedDisableUdpDebugSubmit(adminServer, F("GymClock Admin"));
 }
 
+void serveAdminDebugDump() {
+  Debug.dump();
+  serveAdminIndex();
+}
+
 void serveUserIndex() {
   WiFiClient client = userServer.client();
   String body = "";
@@ -555,6 +563,7 @@ void serveUserIndex() {
                 <div><a href='/reboot'>Reboot Sign</a></div>\
                 <div $ENABLE_UDP_DEBUG><a href='/enableUdpDebug'>Enable UDB Debug</a></div>\
                 <div $DISABLE_UDP_DEBUG><a href='/disableUdpDebug'>Disable UDB Debug</a></div>\
+                <div><a href='/debugDump'>Dump to Debug</a></div>\
             </div>\
         </body>\
     </html>"));
@@ -1285,6 +1294,11 @@ void serveSharedDisableUdpDebugSubmit(ESP8266WebServer & server, const __FlashSt
     </html>"));
   body.replace(F("$TITLE"), title);
   server.send(200, F("text/html"), body);
+}
+
+void serveUserDebugDump() {
+  Debug.dump();
+  serveUserIndex();
 }
 
 void updateWiFiSettings(String newSSID, String newPassword) {
