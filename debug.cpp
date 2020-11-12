@@ -3,6 +3,7 @@
 #include "common.h"
 #include "debug.h"
 #include "programs.h"
+#include "sound.h"
 
 DebugPrint Debug;
 
@@ -98,7 +99,7 @@ void printlnStatus(ace_routine::Coroutine *co) {
 
 void DebugPrint::dump() {
     Debug.println(F("================ State Dump ================"));
-    Debug.println(F("----- CoroutineScheduler::list results -----"));
+    Debug.println(F("--------- CoroutineScheduler::list  --------"));
     ace_routine::CoroutineScheduler::list(Debug);
     Debug.println(F("------------- Coroutine states -------------"));
     Debug.print(F("Init: "));
@@ -113,4 +114,6 @@ void DebugPrint::dump() {
     printlnStatus(&countdownProgram);
     Debug.print(F("Scored Countdown: "));
     printlnStatus(&scoredCountdownProgram);
+    Debug.print(F("Scound: "));
+    printlnStatus(&soundRoutine);
 }
