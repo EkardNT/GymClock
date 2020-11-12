@@ -50,11 +50,12 @@ char wifiPassword[MAX_PASSWORD_SIZE + 1] = {0};
 byte displayState[NUM_DIGITS] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
 // All coroutine instances.
-TestProgramCo testProgramCo;
-InitProgramCo initProgramCo;
-ClockProgramCo clockProgramCo;
-CountdownCo countdownCo;
+TestProgram testProgram;
+InitProgram initProgram;
+ClockProgram clockProgram;
+CountdownProgram countdownProgram;
 StopwatchProgram stopwatchProgram;
+ScoredCountdownProgram scoredCountdownProgram;
 SoundRoutine soundRoutine;
 
 BasicZoneManager<ZONE_MGR_CACHE_SIZE> zoneManager(
@@ -112,11 +113,12 @@ void setup() {
   pinMode(tonePin, OUTPUT);
 
   // Set up the coroutine scheduler.
-  initProgramCo.setupCoroutine(F("initProgramCo"));
-  testProgramCo.setupCoroutine(F("testProgramCo"));
-  clockProgramCo.setupCoroutine(F("clockProgramCo"));
-  countdownCo.setupCoroutine(F("countdownCo"));
+  initProgram.setupCoroutine(F("init"));
+  testProgram.setupCoroutine(F("test"));
+  clockProgram.setupCoroutine(F("clock"));
+  countdownProgram.setupCoroutine(F("countdown"));
   stopwatchProgram.setupCoroutine(F("stopwatch"));
+  scoredCountdownProgram.setupCoroutine(F("scoredCountdown"));
   soundRoutine.setupCoroutine(F("sound"));
   CoroutineScheduler::setup();
 
@@ -183,6 +185,8 @@ void networkInit(const WiFiEventStationModeGotIP& event) {
   userServer.on(F("/changeProgram/countdown"), HTTP_POST, serveUserChangeProgramCountdownSubmit);
   userServer.on(F("/changeProgram/stopwatch"), HTTP_GET, serveUserChangeProgramStopwatch);
   userServer.on(F("/changeProgram/stopwatch"), HTTP_POST, serveUserChangeProgramStopwatchSubmit);
+  userServer.on(F("/changeProgram/scoredCountdown"), HTTP_GET, serveUserChangeProgramScoredCountdown);
+  userServer.on(F("/changeProgram/scoredCountdown"), HTTP_POST, serveUserChangeProgramScoredCountdownSubmit);
   userServer.on(F("/reboot"), HTTP_GET, serveUserReboot);
   userServer.on(F("/rebootSubmit"), HTTP_POST, serveUserRebootSubmit);
   userServer.on(F("/enableUdpDebug"), HTTP_GET, serveUserEnableUdpDebug);
@@ -602,6 +606,7 @@ void serveUserChangeProgram() {
                 <div><a href='/changeProgram/clock'>Clock</a></div>\
                 <div><a href='/changeProgram/stopwatch'>Stopwatch</a></div>\
                 <div><a href='/changeProgram/countdown'>Countdown</a></div>\
+                <div><a href='/changeProgram/scoredCountdown'>Scored Countdown</a></div>\
                 <div><a href='/changeProgram/test'>Test</a></div>\
             </div>\
         </body>\
@@ -651,7 +656,7 @@ void serveUserChangeProgramClock() {
 
 void serveUserChangeProgramClockSubmit() {
   String newTimezoneId = userServer.arg(F("timezoneId"));
-  clockProgramCo.format24 = userServer.hasArg(F("format24"));
+  clockProgram.format24 = userServer.hasArg(F("format24"));
 
   changeProgram(PROGRAM_CLOCK);
 
@@ -804,10 +809,10 @@ void serveUserChangeProgramCountdownSubmit() {
   unsigned long setDurationMillis = setDurationMinutes * MILLIS_PER_MINUTE
     + setDurationSeconds * MILLIS_PER_SECOND;
 
-  countdownCo.sets = sets;
-  countdownCo.readySeconds = readySeconds;
-  countdownCo.setDurationMillis = setDurationMillis;
-  countdownCo.restSeconds = restSeconds;
+  countdownProgram.sets = sets;
+  countdownProgram.readySeconds = readySeconds;
+  countdownProgram.setDurationMillis = setDurationMillis;
+  countdownProgram.restSeconds = restSeconds;
 
   changeProgram(PROGRAM_COUNTDOWN);
 
@@ -905,6 +910,106 @@ void serveUserChangeProgramStopwatchSubmit() {
         <body>\
             <nav><h1>Success</h1></nav>\
             <p><strong>Stopwatch</strong> program activated. Returning to main menu.</p>\
+        </body>\
+    </html>"));
+  userServer.send(200, F("text/html"), body);
+}
+
+void serveUserChangeProgramScoredCountdown() {
+  WiFiClient client = userServer.client();
+  String body = "";
+  body.reserve(2048);
+  body.concat(F("\
+    <html>\
+        <head>\
+            <title>GymClock</title>\
+            <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+            <style>\
+                nav {\
+                    background-color: black;\
+                    color: white;\
+                }\
+                form > * {\
+                    display: block;\
+                }\
+            </style>\
+        </head>\
+        <body>\
+            <nav><h1>Activate Scored Countdown</h1></nav>\
+            <div><a href='/changeProgram'>Back</a></div>\
+            <form method='post' action=''>\
+                <div>\
+                    <strong>Countdown Time</strong>\
+                    <div><label>Minutes <input type='number' name='durationMinutes' placeholder='0' min='0' max='60'></label></div>\
+                    <div><label>Seconds <input type='number' name='durationSeconds' placeholder='0' min='0' max='60'></label></div>\
+                </div>\
+                <div>\
+                    <strong>Initial Scores</strong>\
+                    <div><label>Left <input type='number' name='leftScore' placeholder='0' min='0' max='99'></label></div>\
+                    <div><label>Right <input type='number' name='rightScore' placeholder='0' min='0' max='99'></label></div>\
+                </div>\
+                <div>\
+                    <strong>Preparation Time</strong>\
+                    <div><label>Seconds <input type='number' name='readySeconds' placeholder='5' min='0' max='10'></label></div>\
+                </div>\
+                <input type='submit' value='Activate'>\
+            </form>\
+        </body>\
+    </html>"));
+  userServer.send(200, F("text/html"), body);
+}
+
+void serveUserChangeProgramScoredCountdownSubmit() {
+  int readySeconds = userServer.hasArg(F("readySeconds"))
+    ? userServer.arg(F("readySeconds")).toInt()
+    : 5;
+  readySeconds = constrain(readySeconds, 0, 10);
+  unsigned long durationMinutes = userServer.hasArg(F("durationMinutes"))
+    ? userServer.arg(F("durationMinutes")).toInt()
+    : 0;
+  durationMinutes = constrain(durationMinutes, 0, 60);
+  unsigned long durationSeconds = userServer.hasArg(F("durationSeconds"))
+    ? userServer.arg(F("durationSeconds")).toInt()
+    : 0;
+  durationSeconds = constrain(durationSeconds, 0, 60);
+  int leftScore = userServer.hasArg(F("leftScore"))
+    ? userServer.arg(F("leftScore")).toInt()
+    : 0;
+  leftScore = constrain(leftScore, 0, 99);
+  int rightScore = userServer.hasArg(F("rightScore"))
+    ? userServer.arg(F("rightScore")).toInt()
+    : 0;
+  rightScore = constrain(rightScore, 0, 99);
+
+  unsigned long durationMillis = durationMinutes * MILLIS_PER_MINUTE
+    + durationSeconds * MILLIS_PER_SECOND;
+
+  scoredCountdownProgram.readySeconds = readySeconds;
+  scoredCountdownProgram.durationMillis = durationMillis;
+  scoredCountdownProgram.leftScore = leftScore;
+  scoredCountdownProgram.rightScore = rightScore;
+
+  changeProgram(PROGRAM_SCORED_COUNTDOWN);
+
+  WiFiClient client = userServer.client();
+  String body = "";
+  body.reserve(2048);
+  body.concat(F("\
+      <html>\
+        <head>\
+            <title>GymClock</title>\
+            <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+            <meta http-equiv='refresh' content='3;url=/'>\
+            <style>\
+                nav {\
+                    background-color: green;\
+                    color: white;\
+                }\
+            </style>\
+        </head>\
+        <body>\
+            <nav><h1>Success</h1></nav>\
+            <p><strong>Scored Countdown</strong> program activated. Returning to main menu.</p>\
         </body>\
     </html>"));
   userServer.send(200, F("text/html"), body);

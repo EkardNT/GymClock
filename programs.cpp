@@ -21,30 +21,30 @@ void changeProgram(int newProgram) {
     switch (newProgram) {
         case PROGRAM_INIT:
             Debug.println("Changing to PROGRAM_INIT");
-            initProgramCo.reset();
-            if (initProgramCo.isSuspended()) {
-                initProgramCo.resume();
+            initProgram.reset();
+            if (initProgram.isSuspended()) {
+                initProgram.resume();
             }
             break;
         case PROGRAM_TEST:
             Debug.println("Changing to PROGRAM_TEST");
-            testProgramCo.reset();
-            if (testProgramCo.isSuspended()) {
-                testProgramCo.resume();
+            testProgram.reset();
+            if (testProgram.isSuspended()) {
+                testProgram.resume();
             }
             break;
         case PROGRAM_CLOCK:
             Debug.println("Changing to PROGRAM_CLOCK");
-            clockProgramCo.reset();
-            if (clockProgramCo.isSuspended()) {
-                clockProgramCo.resume();
+            clockProgram.reset();
+            if (clockProgram.isSuspended()) {
+                clockProgram.resume();
             }
             break;
         case PROGRAM_COUNTDOWN:
             Debug.println("Changing to PROGRAM_COUNTDOWN");
-            countdownCo.reset();
-            if (countdownCo.isSuspended()) {
-                countdownCo.resume();
+            countdownProgram.reset();
+            if (countdownProgram.isSuspended()) {
+                countdownProgram.resume();
             }
             break;
         case PROGRAM_STOPWATCH:
@@ -54,6 +54,12 @@ void changeProgram(int newProgram) {
                 stopwatchProgram.resume();
             }
             break;
+        case PROGRAM_SCORED_COUNTDOWN:
+            Debug.println("Changing to PROGRAM_SCORED_COUNTDOWN");
+            scoredCountdownProgram.reset();
+            if (scoredCountdownProgram.isSuspended()) {
+                scoredCountdownProgram.resume();
+            }
         default:
             Debug.println("ERROR: cannot change to unknown program!");
     }
@@ -62,23 +68,26 @@ void changeProgram(int newProgram) {
 void suspendAll(int exceptProgram) {
     Debug.printf("Suspending all programs except %d\r\n", exceptProgram);
     if (exceptProgram != PROGRAM_INIT) {
-        initProgramCo.suspend();
+        initProgram.suspend();
     }
     if (exceptProgram != PROGRAM_TEST) {
-        testProgramCo.suspend();
+        testProgram.suspend();
     }
     if (exceptProgram != PROGRAM_CLOCK) {
-        clockProgramCo.suspend();
+        clockProgram.suspend();
     }
     if (exceptProgram != PROGRAM_COUNTDOWN) {
-        countdownCo.suspend();
+        countdownProgram.suspend();
     }
     if (exceptProgram != PROGRAM_STOPWATCH) {
         stopwatchProgram.suspend();
     }
+    if (exceptProgram != PROGRAM_SCORED_COUNTDOWN) {
+        scoredCountdownProgram.suspend();
+    }
 }
 
-int TestProgramCo::runCoroutine() {
+int TestProgram::runCoroutine() {
     COROUTINE_LOOP() {
         Debug.println("Test program showing TEST");
         for (int i = 0; i < NUM_DIGITS; i++) {
@@ -113,7 +122,7 @@ int TestProgramCo::runCoroutine() {
     }
 }
 
-int InitProgramCo::runCoroutine() {
+int InitProgram::runCoroutine() {
     COROUTINE_BEGIN();
     Debug.println("Start of Init program");
 
@@ -139,7 +148,7 @@ int InitProgramCo::runCoroutine() {
         COROUTINE_AWAIT(networkActive);
     }
 
-    Debug.println("Net on in InitProgramCo");
+    Debug.println("Net on in InitProgram");
     clearDisplay();
     updateDigit(0, 'N');
     updateDigit(1, 'E');
@@ -154,7 +163,7 @@ int InitProgramCo::runCoroutine() {
     COROUTINE_END();
 }
 
-int ClockProgramCo::runCoroutine() {
+int ClockProgram::runCoroutine() {
     COROUTINE_LOOP() {
         unsigned long unixEpochSeconds = timeClient.getEpochTime();
         ace_time::TimeZone localTz = zoneManager.createForZoneInfo(&ace_time::zonedb::kZoneAmerica_Los_Angeles);
@@ -193,7 +202,7 @@ void printlnStatus(Coroutine *co) {
     }
 }
 
-int CountdownCo::runCoroutine() {
+int CountdownProgram::runCoroutine() {
     COROUTINE_BEGIN();
     Debug.println("Start of Countdown program");
 
@@ -280,7 +289,7 @@ int CountdownCo::runCoroutine() {
         }
     }
 
-    Debug.println("Flashing done for countdown");
+    Debug.println("Flashing done for Countdown");
     static int doneCounter;
     for (doneCounter = 0; doneCounter < 5; doneCounter++) {
         clearDisplay();
@@ -355,5 +364,31 @@ int StopwatchProgram::runCoroutine() {
     }
 
     Debug.println("End of Stopwatch program");
+    COROUTINE_END();
+}
+
+int ScoredCountdownProgram::runCoroutine() {
+    COROUTINE_BEGIN();
+    Debug.println("Start of ScoredCountdown program");
+
+    // Do an initial preparation countdown before the main loop.
+    while (this->readySeconds > 0) {
+        clearDisplay();
+        show2DigitNumber(this->readySeconds, 2);
+        show2DigitNumber(this->leftScore, 6);
+        show2DigitNumber(this->rightScore, 8);
+
+        // Also beep the last 3 seconds.
+        if (this->readySeconds <= 3) {
+            soundRoutine.playSound(SOUND_BEEP);
+        }
+
+        COROUTINE_DELAY(1000);
+        this->readySeconds -= 1;
+    }
+
+    changeProgram(PROGRAM_CLOCK);
+
+    Debug.println("End of ScoredCountdown program");
     COROUTINE_END();
 }

@@ -8,34 +8,35 @@ const int PROGRAM_TEST = 1;
 const int PROGRAM_CLOCK = 2;
 const int PROGRAM_COUNTDOWN = 3;
 const int PROGRAM_STOPWATCH = 4;
+const int PROGRAM_SCORED_COUNTDOWN = 5;
 
 int currentProgram();
 void changeProgram(int newProgram);
 void suspendAll(int exceptProgram);
 
-class TestProgramCo : public ace_routine::Coroutine {
+class TestProgram : public ace_routine::Coroutine {
     public:
-        TestProgramCo() {}
+        TestProgram() {}
         int runCoroutine() override;
 };
 
-class InitProgramCo : public ace_routine::Coroutine {
+class InitProgram : public ace_routine::Coroutine {
     public:
-        InitProgramCo() {}
+        InitProgram() {}
         int runCoroutine() override;
 };
 
-class ClockProgramCo : public ace_routine::Coroutine {
+class ClockProgram : public ace_routine::Coroutine {
     public:
-        ClockProgramCo() {}
+        ClockProgram() {}
         int runCoroutine() override;
 
         bool format24 = false;
 };
 
-class CountdownCo : public ace_routine::Coroutine {
+class CountdownProgram : public ace_routine::Coroutine {
     public:
-        CountdownCo() {}
+        CountdownProgram() {}
         int runCoroutine() override;
 
         int readySeconds = 0;
@@ -60,10 +61,21 @@ class StopwatchProgram : public ace_routine::Coroutine {
         unsigned long lastBeepTimeMillis = 0;
 };
 
-extern TestProgramCo testProgramCo;
-extern InitProgramCo initProgramCo;
-extern ClockProgramCo clockProgramCo;
-extern CountdownCo countdownCo;
+class ScoredCountdownProgram : public ace_routine::Coroutine {
+    public:
+        ScoredCountdownProgram() {}
+        int runCoroutine() override;
+        int leftScore = 0;
+        int rightScore = 0;
+        int readySeconds = 0;
+        unsigned long durationMillis;
+};
+
+extern TestProgram testProgram;
+extern InitProgram initProgram;
+extern ClockProgram clockProgram;
+extern CountdownProgram countdownProgram;
 extern StopwatchProgram stopwatchProgram;
+extern ScoredCountdownProgram scoredCountdownProgram;
 
 #endif
