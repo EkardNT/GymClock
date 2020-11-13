@@ -185,20 +185,6 @@ void networkStop(const WiFiEventStationModeDisconnected& event) {
   networkActive = false;
 }
 
-// TODO: Move into shared_ui.h
-void serveSharedStylesheet(ESP8266WebServer & server) {
-  WiFiClient client = server.client();
-  String body = "";
-  body.reserve(2048);
-  // Remember every line needs to be ended with a backslash!
-  body.concat(F("\
-    body {\
-      background-color: white;\
-    }\
-  "));
-  server.send(200, F("text/css"), body);
-}
-
 void updateWiFiSettings(String newSSID, String newPassword) {
   strncpy(wifiSSID, newSSID.c_str(), MAX_SSID_SIZE);
   strncpy(wifiPassword, newPassword.c_str(), MAX_PASSWORD_SIZE);

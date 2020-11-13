@@ -149,3 +149,17 @@ void serveSharedDisableUdpDebugSubmit(ESP8266WebServer & server, const __FlashSt
   body.replace(F("$TITLE"), title);
   server.send(200, F("text/html"), body);
 }
+
+// TODO: Move into shared_ui.h
+void serveSharedStylesheet(ESP8266WebServer & server) {
+  WiFiClient client = server.client();
+  String body = "";
+  body.reserve(2048);
+  // Remember every line needs to be ended with a backslash!
+  body.concat(F("\
+    body {\
+      background-color: white;\
+    }\
+  "));
+  server.send(200, F("text/css"), body);
+}
