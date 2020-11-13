@@ -97,6 +97,7 @@ void setup() {
   adminServer.on(F("/disableUdpDebug"), HTTP_GET, serveAdminDisableUdpDebug);
   adminServer.on(F("/disableUdpDebug"), HTTP_POST, serveAdminDisableUdpDebugSubmit);
   adminServer.on(F("/debugDump"), HTTP_GET, serveAdminDebugDump);
+  adminServer.on(F("/stylesheet.css"), serveAdminStylesheet);
   adminServer.begin();
 
   // Unfortunately the NTP/UDP request is apparently implemented as a blocking call, so it causes a noticable flicker.
@@ -199,6 +200,7 @@ void networkInit(const WiFiEventStationModeGotIP& event) {
   userServer.on(F("/scoredCountdownDecrementLeft"), HTTP_GET, serveUserScoredCountdownDecrementLeft);
   userServer.on(F("/scoredCountdownDecrementRight"), HTTP_GET, serveUserScoredCountdownDecrementRight);
   userServer.on(F("/debugDump"), HTTP_GET, serveUserDebugDump);
+  userServer.on(F("/stylesheet.css"), serveUserStylesheet);
   userServer.begin();
 
   httpUpdateServer.setup(&webUpdateServer);
@@ -241,6 +243,7 @@ void serveAdminIndex() {
         <head>\
             <title>GymClock Admin</title>\
             <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+            <link rel='stylesheet' href='/stylesheet.css'>\
             <style>\
                 .nav {\
                     background-color: black;\
@@ -347,6 +350,7 @@ void serveAdminReboot() {
         <head>\
             <title>GymClock Admin</title>\
             <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+            <link rel='stylesheet' href='/stylesheet.css'>\
             <style>\
                 .nav {\
                     background-color: red;\
@@ -381,6 +385,7 @@ void serveAdminRebootSubmit() {
         <head>\
             <title>GymClock Admin</title>\
             <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+            <link rel='stylesheet' href='/stylesheet.css'>\
             <style>\
                 .nav {\
                     background-color: red;\
@@ -414,6 +419,7 @@ void serveAdminChangeWiFi() {
         <head>\
             <title>GymClock Admin</title>\
             <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+            <link rel='stylesheet' href='/stylesheet.css'>\
             <style>\
                 .nav {\
                     background-color: black;\
@@ -468,6 +474,7 @@ void serveAdminChangeWiFiSubmit() {
         <head>\
             <title>GymClock Admin</title>\
             <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+            <link rel='stylesheet' href='/stylesheet.css'>\
             <style>\
                 .nav {\
                     background-color: green;\
@@ -515,6 +522,10 @@ void serveAdminDebugDump() {
   serveAdminIndex();
 }
 
+void serveAdminStylesheet() {
+  serveSharedStylesheet(adminServer);
+}
+
 void serveUserIndex() {
   WiFiClient client = userServer.client();
   String body = "";
@@ -524,6 +535,7 @@ void serveUserIndex() {
         <head>\
             <title>GymClock</title>\
             <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+            <link rel='stylesheet' href='/stylesheet.css'>\
             <style>\
                 nav {\
                     background-color: black;\
@@ -619,6 +631,7 @@ void serveUserChangeProgram() {
         <head>\
             <title>GymClock</title>\
             <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+            <link rel='stylesheet' href='/stylesheet.css'>\
             <style>\
                 nav {\
                     background-color: black;\
@@ -650,6 +663,7 @@ void serveUserChangeProgramClock() {
         <head>\
             <title>GymClock</title>\
             <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+            <link rel='stylesheet' href='/stylesheet.css'>\
             <style>\
                 nav {\
                     background-color: black;\
@@ -696,6 +710,7 @@ void serveUserChangeProgramClockSubmit() {
             <title>GymClock</title>\
             <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
             <meta http-equiv='refresh' content='3;url=/'>\
+            <link rel='stylesheet' href='/stylesheet.css'>\
             <style>\
                 nav {\
                     background-color: green;\
@@ -720,6 +735,7 @@ void serveUserChangeProgramTest() {
         <head>\
             <title>GymClock</title>\
             <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+            <link rel='stylesheet' href='/stylesheet.css'>\
             <style>\
                 nav {\
                     background-color: black;\
@@ -753,6 +769,7 @@ void serveUserChangeProgramTestSubmit() {
             <title>GymClock</title>\
             <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
             <meta http-equiv='refresh' content='3;url=/'>\
+            <link rel='stylesheet' href='/stylesheet.css'>\
             <style>\
                 nav {\
                     background-color: green;\
@@ -777,6 +794,7 @@ void serveUserChangeProgramCountdown() {
         <head>\
             <title>GymClock</title>\
             <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+            <link rel='stylesheet' href='/stylesheet.css'>\
             <style>\
                 nav {\
                     background-color: black;\
@@ -852,6 +870,7 @@ void serveUserChangeProgramCountdownSubmit() {
             <title>GymClock</title>\
             <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
             <meta http-equiv='refresh' content='3;url=/'>\
+            <link rel='stylesheet' href='/stylesheet.css'>\
             <style>\
                 nav {\
                     background-color: green;\
@@ -876,6 +895,7 @@ void serveUserChangeProgramStopwatch() {
         <head>\
             <title>GymClock</title>\
             <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+            <link rel='stylesheet' href='/stylesheet.css'>\
             <style>\
                 nav {\
                     background-color: black;\
@@ -927,6 +947,7 @@ void serveUserChangeProgramStopwatchSubmit() {
             <title>GymClock</title>\
             <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
             <meta http-equiv='refresh' content='3;url=/'>\
+            <link rel='stylesheet' href='/stylesheet.css'>\
             <style>\
                 nav {\
                     background-color: green;\
@@ -951,6 +972,7 @@ void serveUserChangeProgramScoredCountdown() {
         <head>\
             <title>GymClock</title>\
             <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+            <link rel='stylesheet' href='/stylesheet.css'>\
             <style>\
                 nav {\
                     background-color: black;\
@@ -1026,6 +1048,7 @@ void serveUserChangeProgramScoredCountdownSubmit() {
         <head>\
             <title>GymClock</title>\
             <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+            <link rel='stylesheet' href='/stylesheet.css'>\
             <meta http-equiv='refresh' content='3;url=/'>\
             <style>\
                 nav {\
@@ -1051,6 +1074,7 @@ void serveUserReboot() {
         <head>\
             <title>GymClock</title>\
             <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+            <link rel='stylesheet' href='/stylesheet.css'>\
             <style>\
                 .nav {\
                     background-color: red;\
@@ -1084,6 +1108,7 @@ void serveUserRebootSubmit() {
         <head>\
             <title>GymClock</title>\
             <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+            <link rel='stylesheet' href='/stylesheet.css'>\
             <style>\
                 .nav {\
                     background-color: green;\
@@ -1152,6 +1177,28 @@ void serveUserScoredCountdownDecrementRight() {
   serveUserIndex();
 }
 
+void serveUserDebugDump() {
+  Debug.dump();
+  serveUserIndex();
+}
+
+void serveUserStylesheet() {
+  serveSharedStylesheet(userServer);
+}
+
+void serveSharedStylesheet(ESP8266WebServer & server) {
+  WiFiClient client = server.client();
+  String body = "";
+  body.reserve(2048);
+  // Remember every line needs to be ended with a backslash!
+  body.concat(F("\
+    body {\
+      background-color: white;\
+    }\
+  "));
+  server.send(200, F("text/css"), body);
+}
+
 void serveSharedEnableUdpDebug(ESP8266WebServer & server, const __FlashStringHelper * title) {
   WiFiClient client = server.client();
   String body = "";
@@ -1161,6 +1208,7 @@ void serveSharedEnableUdpDebug(ESP8266WebServer & server, const __FlashStringHel
         <head>\
             <title>$TITLE</title>\
             <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+            <link rel='stylesheet' href='/stylesheet.css'>\
             <style>\
                 .nav {\
                     background-color: black;\
@@ -1209,6 +1257,7 @@ void serveSharedEnableUdpDebugSubmit(ESP8266WebServer & server, const __FlashStr
             <title>$TITLE</title>\
             <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
             <meta http-equiv='refresh' content='3;url=/'>\
+            <link rel='stylesheet' href='/stylesheet.css'>\
             <style>\
                 .nav {\
                     background-color: green;\
@@ -1239,6 +1288,7 @@ void serveSharedDisableUdpDebug(ESP8266WebServer & server, const __FlashStringHe
         <head>\
             <title>$TITLE</title>\
             <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+            <link rel='stylesheet' href='/stylesheet.css'>\
             <style>\
                 .nav {\
                     background-color: black;\
@@ -1275,6 +1325,7 @@ void serveSharedDisableUdpDebugSubmit(ESP8266WebServer & server, const __FlashSt
             <title>$TITLE</title>\
             <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
             <meta http-equiv='refresh' content='3;url=/'>\
+            <link rel='stylesheet' href='/stylesheet.css'>\
             <style>\
                 .nav {\
                     background-color: green;\
@@ -1294,11 +1345,6 @@ void serveSharedDisableUdpDebugSubmit(ESP8266WebServer & server, const __FlashSt
     </html>"));
   body.replace(F("$TITLE"), title);
   server.send(200, F("text/html"), body);
-}
-
-void serveUserDebugDump() {
-  Debug.dump();
-  serveUserIndex();
 }
 
 void updateWiFiSettings(String newSSID, String newPassword) {
