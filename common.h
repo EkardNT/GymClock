@@ -12,6 +12,7 @@
 #include <NTPClient.h>
 #include <WiFiUdp.h>
 #include <AceTime.h>
+#include <IPAddress.h>
 
 const char AP_SSID[] = "GymClockAdmin";
 // Change this to the actual password before flashing the sign.
@@ -22,6 +23,9 @@ const IPAddress AP_SUBNET_MASK(255, 255, 255, 0);
 
 const int MAX_SSID_SIZE = 32;
 const int MAX_PASSWORD_SIZE = 32;
+
+extern char wifiSSID[MAX_SSID_SIZE + 1];
+extern char wifiPassword[MAX_PASSWORD_SIZE + 1];
 
 // EEPROM offsets.
 // 1 byte for ssid field length
@@ -127,5 +131,13 @@ void updateDigit(byte digit, unsigned char character);
 void show2DigitNumber(int number, byte firstDigit);
 
 void clearDisplay();
+
+char * formatIntoTemp(IPAddress val);
+
+char * formatIntoTemp(long val);
+
+char * formatFloatIntoTemp(float val);
+
+void updateWiFiSettings(String newSSID, String newPassword);
 
 #endif

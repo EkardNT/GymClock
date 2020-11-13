@@ -1,5 +1,8 @@
 #include "common.h"
 
+const int FORMAT_BUF_SIZE = 256;
+char tempFormatBuffer[FORMAT_BUF_SIZE] = {0};
+
 void waitForSerial() {
   // Wait for any data before proceeding...
   while (Serial.available() == 0) {
@@ -80,4 +83,19 @@ void clearDisplay() {
   for (int i = 0; i < NUM_DIGITS; i++) {
     updateDigit(i, ' ');
   }
+}
+
+char * formatIntoTemp(IPAddress val) {
+  snprintf(tempFormatBuffer, FORMAT_BUF_SIZE, "%d.%d.%d.%d", val[0], val[1], val[2], val[3]);
+  return tempFormatBuffer;
+}
+
+char * formatIntoTemp(long val) {
+  snprintf(tempFormatBuffer, FORMAT_BUF_SIZE, "%d", val);
+  return tempFormatBuffer;
+}
+
+char * formatFloatIntoTemp(float val) {
+  snprintf(tempFormatBuffer, FORMAT_BUF_SIZE, "%.2f", val);
+  return tempFormatBuffer;
 }
