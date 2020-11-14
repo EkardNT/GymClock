@@ -56,8 +56,8 @@ void serveUserIndex() {
             <div>\
                 <h2>Debug</h2>\
                 <div><a href='/reboot'>Reboot Sign</a></div>\
-                <div $ENABLE_UDP_DEBUG><a href='/enableUdpDebug'>Enable UDB Debug</a></div>\
-                <div $DISABLE_UDP_DEBUG><a href='/disableUdpDebug'>Disable UDB Debug</a></div>\
+                <div $ENABLE_UDP_DEBUG><a href='/enableUdpDebug'>Enable UDP Debug</a></div>\
+                <div $DISABLE_UDP_DEBUG><a href='/disableUdpDebug'>Disable UDP Debug</a></div>\
                 <div><a href='/debugDump'>Dump to Debug</a></div>\
             </div>\
         </body>\
