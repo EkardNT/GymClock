@@ -492,6 +492,7 @@ void serveUserChangeProgramScoredCountdown() {
 }
 
 void serveUserChangeProgramScoredCountdownSubmit() {
+  // TODO: hasArg returns true for ""!
   int readySeconds = userServer.hasArg(F("readySeconds"))
     ? userServer.arg(F("readySeconds")).toInt()
     : 5;
@@ -516,6 +517,8 @@ void serveUserChangeProgramScoredCountdownSubmit() {
   unsigned long durationMillis = durationMinutes * MILLIS_PER_MINUTE
     + durationSeconds * MILLIS_PER_SECOND;
 
+  Debug.printf("Setting ScoredCountdown settings to readySeconds=%d, durationMillis=%d, leftScore=%d, rightScore=%d\r\n",
+      readySeconds, durationMillis, leftScore, rightScore);
   scoredCountdownProgram.readySeconds = readySeconds;
   scoredCountdownProgram.durationMillis = durationMillis;
   scoredCountdownProgram.leftScore = leftScore;

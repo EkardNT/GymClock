@@ -60,6 +60,7 @@ void changeProgram(int newProgram) {
             if (scoredCountdownProgram.isSuspended()) {
                 scoredCountdownProgram.resume();
             }
+            break;
         default:
             Debug.println("ERROR: cannot change to unknown program!");
     }
