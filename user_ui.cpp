@@ -10,666 +10,704 @@
 extern ESP8266WebServer userServer;
 
 void serveUserIndex() {
-  WiFiClient client = userServer.client();
-  String body = "";
-  body.reserve(2048);
-  body.concat(F("\
-      <html>\
-        <head>\
-            <title>GymClock</title>\
-            <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
-            <link rel='stylesheet' href='/stylesheet.css'>\
-            <style>\
-                nav {\
-                    background-color: black;\
-                    color: white;\
-                }\
-            </style>\
-        </head>\
-        <body>\
-            <nav><h1>GymClock Main Menu</h1></nav>\
-            <div>\
-                <h2>Current Program</h2>\
-                <p>Program: <strong>$CURRENT_PROGRAM</strong></p>\
-                <div $SCORED_COUNTDOWN_DISPLAY>\
-                    <a href='/scoredCountdownIncrementLeft'>+ Left Score</a>\
-                    <a href='/scoredCountdownIncrementRight'>+ Right Score</a>\
-                    <a href='/scoredCountdownDecrementLeft'>- Left Score</a>\
-                    <a href='/scoredCountdownDecrementRight'>- Right Score</a>\
+    Debug.println(F("serveUserIndex"));
+
+    WiFiClient client = userServer.client();
+    String body = "";
+    body.reserve(2048);
+    body.concat(F("\
+        <html>\
+            <head>\
+                <title>GymClock</title>\
+                <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+                <link rel='stylesheet' href='/stylesheet.css'>\
+                <style>\
+                    nav {\
+                        background-color: black;\
+                        color: white;\
+                    }\
+                </style>\
+            </head>\
+            <body>\
+                <nav><h1>GymClock Main Menu</h1></nav>\
+                <div>\
+                    <h2>Current Program</h2>\
+                    <p>Program: <strong>$CURRENT_PROGRAM</strong></p>\
+                    <div $SCORED_COUNTDOWN_DISPLAY>\
+                        <a href='/scoredCountdownIncrementLeft'>+ Left Score</a>\
+                        <a href='/scoredCountdownIncrementRight'>+ Right Score</a>\
+                        <a href='/scoredCountdownDecrementLeft'>- Left Score</a>\
+                        <a href='/scoredCountdownDecrementRight'>- Right Score</a>\
+                    </div>\
                 </div>\
-            </div>\
-            <div>\
-                <h2>Actions</h2>\
-                <div><a href='/changeProgram'>Change Program</a></div>\
-            </div>\
-            <div>\
-                <h2>WiFi Info</h2>\
-                <ul>\
-                    <li>IP: $WIFI_IP</li>\
-                    <li>Subnet Mask: $WIFI_MASK</li>\
-                    <li>Gateway IP: $WIFI_GATEWAY</li>\
-                    <li>DNS IP: $WIFI_DNS</li>\
-                    <li>Hostname: $WIFI_HOSTNAME</li>\
-                    <li>RSSI: $WIFI_RSSI</li>\
-                </ul>\
-            </div>\
-            <div>\
-                <h2>Debug</h2>\
-                <div><a href='/reboot'>Reboot Sign</a></div>\
-                <div $ENABLE_UDP_DEBUG><a href='/enableUdpDebug'>Enable UDP Debug</a></div>\
-                <div $DISABLE_UDP_DEBUG><a href='/disableUdpDebug'>Disable UDP Debug</a></div>\
-                <div><a href='/debugDump'>Dump to Debug</a></div>\
-            </div>\
-        </body>\
-    </html>"));
-  switch (currentProgram()) {
-    case PROGRAM_INIT:
-      body.replace(F("$CURRENT_PROGRAM"), F("Init"));
-      break;
-    case PROGRAM_TEST:
-      body.replace(F("$CURRENT_PROGRAM"), F("Test"));
-      break;
-    case PROGRAM_CLOCK:
-      body.replace(F("$CURRENT_PROGRAM"), F("Clock"));
-      break;
-    case PROGRAM_COUNTDOWN:
-      body.replace(F("$CURRENT_PROGRAM"), F("Countdown"));
-      break;
-    case PROGRAM_STOPWATCH:
-      body.replace(F("$CURRENT_PROGRAM"), F("Stopwatch"));
-      break;
-    case PROGRAM_SCORED_COUNTDOWN:
-      body.replace(F("$CURRENT_PROGRAM"), F("Scored Countdown"));
-      break;
-    default:
-      body.replace(F("$CURRENT_PROGRAM"), F("Unknown"));
-  }
-  body.replace(F("$WIFI_IP"), formatIntoTemp(WiFi.localIP()));
-  body.replace(F("$WIFI_MASK"), formatIntoTemp(WiFi.subnetMask()));
-  body.replace(F("$WIFI_GATEWAY"), formatIntoTemp(WiFi.gatewayIP()));
-  body.replace(F("$WIFI_DNS"), formatIntoTemp(WiFi.dnsIP()));
-  body.replace(F("$WIFI_HOSTNAME"), WiFi.hostname());
-  body.replace(F("$WIFI_RSSI"), formatFloatIntoTemp(WiFi.RSSI()));
-  if (Debug.isUdpEnabled()) {
-    body.replace(F("$ENABLE_UDP_DEBUG"), F("style='display:none;'"));
-    body.replace(F("$DISABLE_UDP_DEBUG"), F(""));
-  } else {
-    body.replace(F("$ENABLE_UDP_DEBUG"), F(""));
-    body.replace(F("$DISABLE_UDP_DEBUG"), F("style='display:none;'"));
-  }
-  if (currentProgram() == PROGRAM_SCORED_COUNTDOWN) {
-    body.replace(F("$SCORED_COUNTDOWN_DISPLAY"), F(""));
-  } else {
-    body.replace(F("$SCORED_COUNTDOWN_DISPLAY"), F("style='display:none;'"));
-  }
-  userServer.send(200, F("text/html"), body);
+                <div>\
+                    <h2>Actions</h2>\
+                    <div><a href='/changeProgram'>Change Program</a></div>\
+                </div>\
+                <div>\
+                    <h2>WiFi Info</h2>\
+                    <ul>\
+                        <li>IP: $WIFI_IP</li>\
+                        <li>Subnet Mask: $WIFI_MASK</li>\
+                        <li>Gateway IP: $WIFI_GATEWAY</li>\
+                        <li>DNS IP: $WIFI_DNS</li>\
+                        <li>Hostname: $WIFI_HOSTNAME</li>\
+                        <li>RSSI: $WIFI_RSSI</li>\
+                    </ul>\
+                </div>\
+                <div>\
+                    <h2>Debug</h2>\
+                    <div><a href='/reboot'>Reboot Sign</a></div>\
+                    <div $ENABLE_UDP_DEBUG><a href='/enableUdpDebug'>Enable UDP Debug</a></div>\
+                    <div $DISABLE_UDP_DEBUG><a href='/disableUdpDebug'>Disable UDP Debug</a></div>\
+                    <div><a href='/debugDump'>Dump to Debug</a></div>\
+                </div>\
+            </body>\
+        </html>"));
+    switch (currentProgram()) {
+        case PROGRAM_INIT:
+        body.replace(F("$CURRENT_PROGRAM"), F("Init"));
+        break;
+        case PROGRAM_TEST:
+        body.replace(F("$CURRENT_PROGRAM"), F("Test"));
+        break;
+        case PROGRAM_CLOCK:
+        body.replace(F("$CURRENT_PROGRAM"), F("Clock"));
+        break;
+        case PROGRAM_COUNTDOWN:
+        body.replace(F("$CURRENT_PROGRAM"), F("Countdown"));
+        break;
+        case PROGRAM_STOPWATCH:
+        body.replace(F("$CURRENT_PROGRAM"), F("Stopwatch"));
+        break;
+        case PROGRAM_SCORED_COUNTDOWN:
+        body.replace(F("$CURRENT_PROGRAM"), F("Scored Countdown"));
+        break;
+        default:
+        body.replace(F("$CURRENT_PROGRAM"), F("Unknown"));
+    }
+    body.replace(F("$WIFI_IP"), formatIntoTemp(WiFi.localIP()));
+    body.replace(F("$WIFI_MASK"), formatIntoTemp(WiFi.subnetMask()));
+    body.replace(F("$WIFI_GATEWAY"), formatIntoTemp(WiFi.gatewayIP()));
+    body.replace(F("$WIFI_DNS"), formatIntoTemp(WiFi.dnsIP()));
+    body.replace(F("$WIFI_HOSTNAME"), WiFi.hostname());
+    body.replace(F("$WIFI_RSSI"), formatFloatIntoTemp(WiFi.RSSI()));
+    if (Debug.isUdpEnabled()) {
+        body.replace(F("$ENABLE_UDP_DEBUG"), F("style='display:none;'"));
+        body.replace(F("$DISABLE_UDP_DEBUG"), F(""));
+    } else {
+        body.replace(F("$ENABLE_UDP_DEBUG"), F(""));
+        body.replace(F("$DISABLE_UDP_DEBUG"), F("style='display:none;'"));
+    }
+    if (currentProgram() == PROGRAM_SCORED_COUNTDOWN) {
+        body.replace(F("$SCORED_COUNTDOWN_DISPLAY"), F(""));
+    } else {
+        body.replace(F("$SCORED_COUNTDOWN_DISPLAY"), F("style='display:none;'"));
+    }
+    userServer.send(200, F("text/html"), body);
 }
 
 void serveUserChangeProgram() {
-  WiFiClient client = userServer.client();
-  String body = "";
-  body.reserve(2048);
-  body.concat(F("\
-      <html>\
-        <head>\
-            <title>GymClock</title>\
-            <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
-            <link rel='stylesheet' href='/stylesheet.css'>\
-            <style>\
-                nav {\
-                    background-color: black;\
-                    color: white;\
-                }\
-            </style>\
-        </head>\
-        <body>\
-            <nav><h1>Change Program</h1></nav>\
-            <div>\
-                <div><a href='/'>Back</a></div>\
-                <div><a href='/changeProgram/clock'>Clock</a></div>\
-                <div><a href='/changeProgram/stopwatch'>Stopwatch</a></div>\
-                <div><a href='/changeProgram/countdown'>Countdown</a></div>\
-                <div><a href='/changeProgram/scoredCountdown'>Scored Countdown</a></div>\
-                <div><a href='/changeProgram/test'>Test</a></div>\
-            </div>\
-        </body>\
-    </html>"));
-  userServer.send(200, F("text/html"), body);
+    Debug.println(F("serveUserChangeProgram"));
+
+    WiFiClient client = userServer.client();
+    String body = "";
+    body.reserve(2048);
+    body.concat(F("\
+        <html>\
+            <head>\
+                <title>GymClock</title>\
+                <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+                <link rel='stylesheet' href='/stylesheet.css'>\
+                <style>\
+                    nav {\
+                        background-color: black;\
+                        color: white;\
+                    }\
+                </style>\
+            </head>\
+            <body>\
+                <nav><h1>Change Program</h1></nav>\
+                <div>\
+                    <div><a href='/'>Back</a></div>\
+                    <div><a href='/changeProgram/clock'>Clock</a></div>\
+                    <div><a href='/changeProgram/stopwatch'>Stopwatch</a></div>\
+                    <div><a href='/changeProgram/countdown'>Countdown</a></div>\
+                    <div><a href='/changeProgram/scoredCountdown'>Scored Countdown</a></div>\
+                    <div><a href='/changeProgram/test'>Test</a></div>\
+                </div>\
+            </body>\
+        </html>"));
+    userServer.send(200, F("text/html"), body);
 }
 
 void serveUserChangeProgramClock() {
-  WiFiClient client = userServer.client();
-  String body = "";
-  body.reserve(2048);
-  body.concat(F("\
-    <html>\
-        <head>\
-            <title>GymClock</title>\
-            <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
-            <link rel='stylesheet' href='/stylesheet.css'>\
-            <style>\
-                nav {\
-                    background-color: black;\
-                    color: white;\
-                }\
-                form > * {\
-                    display: block;\
-                }\
-            </style>\
-        </head>\
-        <body>\
-            <nav><h1>Activate Clock</h1></nav>\
-            <div><a href='/changeProgram'>Back</a></div>\
-            <form method='post' action=''>\
-                <label>\
-                    Timezone\
-                    <select name='timezoneId'>\
-                        <option value='1'>America/Los Angeles</option>\
-                    </select>\
-                </label>\
-                <label>\
-                    24-Hour Format\
-                    <input type='checkbox' name='format24'>\
-                </label>\
-                <input type='submit' value='Activate'>\
-            </form>\
-        </body>\
-    </html>"));
-  userServer.send(200, F("text/html"), body);
+    Debug.println(F("serveUserChangeProgramClock"));
+
+    WiFiClient client = userServer.client();
+    String body = "";
+    body.reserve(2048);
+    body.concat(F("\
+        <html>\
+            <head>\
+                <title>GymClock</title>\
+                <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+                <link rel='stylesheet' href='/stylesheet.css'>\
+                <style>\
+                    nav {\
+                        background-color: black;\
+                        color: white;\
+                    }\
+                    form > * {\
+                        display: block;\
+                    }\
+                </style>\
+            </head>\
+            <body>\
+                <nav><h1>Activate Clock</h1></nav>\
+                <div><a href='/changeProgram'>Back</a></div>\
+                <form method='post' action=''>\
+                    <label>\
+                        Timezone\
+                        <select name='timezoneId'>\
+                            <option value='1'>America/Los Angeles</option>\
+                        </select>\
+                    </label>\
+                    <label>\
+                        24-Hour Format\
+                        <input type='checkbox' name='format24'>\
+                    </label>\
+                    <input type='submit' value='Activate'>\
+                </form>\
+            </body>\
+        </html>"));
+    userServer.send(200, F("text/html"), body);
 }
 
 void serveUserChangeProgramClockSubmit() {
-  String newTimezoneId = userServer.arg(F("timezoneId"));
-  clockProgram.format24 = userServer.hasArg(F("format24"));
+    Debug.println(F("serveUserChangeProgramClockSubmit"));
 
-  changeProgram(PROGRAM_CLOCK);
+    String newTimezoneId = userServer.arg(F("timezoneId"));
+    clockProgram.format24 = userServer.hasArg(F("format24"));
 
-  WiFiClient client = userServer.client();
-  String body = "";
-  body.reserve(2048);
-  body.concat(F("\
-      <html>\
-        <head>\
-            <title>GymClock</title>\
-            <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
-            <meta http-equiv='refresh' content='3;url=/'>\
-            <link rel='stylesheet' href='/stylesheet.css'>\
-            <style>\
-                nav {\
-                    background-color: green;\
-                    color: white;\
-                }\
-            </style>\
-        </head>\
-        <body>\
-            <nav><h1>Success</h1></nav>\
-            <p><strong>Clock</strong> program activated. Returning to main menu.</p>\
-        </body>\
-    </html>"));
-  userServer.send(200, F("text/html"), body);
+    changeProgram(PROGRAM_CLOCK);
+
+    WiFiClient client = userServer.client();
+    String body = "";
+    body.reserve(2048);
+    body.concat(F("\
+        <html>\
+            <head>\
+                <title>GymClock</title>\
+                <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+                <meta http-equiv='refresh' content='3;url=/'>\
+                <link rel='stylesheet' href='/stylesheet.css'>\
+                <style>\
+                    nav {\
+                        background-color: green;\
+                        color: white;\
+                    }\
+                </style>\
+            </head>\
+            <body>\
+                <nav><h1>Success</h1></nav>\
+                <p><strong>Clock</strong> program activated. Returning to main menu.</p>\
+            </body>\
+        </html>"));
+    userServer.send(200, F("text/html"), body);
 }
 
 void serveUserChangeProgramTest() {
-  WiFiClient client = userServer.client();
-  String body = "";
-  body.reserve(2048);
-  body.concat(F("\
-    <html>\
-        <head>\
-            <title>GymClock</title>\
-            <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
-            <link rel='stylesheet' href='/stylesheet.css'>\
-            <style>\
-                nav {\
-                    background-color: black;\
-                    color: white;\
-                }\
-                form > * {\
-                    display: block;\
-                }\
-            </style>\
-        </head>\
-        <body>\
-            <nav><h1>Activate Test</h1></nav>\
-            <div><a href='/changeProgram'>Back</a></div>\
-            <form method='post' action=''>\
-                <input type='submit' value='Activate'>\
-            </form>\
-        </body>\
-    </html>"));
-  userServer.send(200, F("text/html"), body);
+    Debug.println(F("serveUserChangeProgramTest"));
+
+    WiFiClient client = userServer.client();
+    String body = "";
+    body.reserve(2048);
+    body.concat(F("\
+        <html>\
+            <head>\
+                <title>GymClock</title>\
+                <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+                <link rel='stylesheet' href='/stylesheet.css'>\
+                <style>\
+                    nav {\
+                        background-color: black;\
+                        color: white;\
+                    }\
+                    form > * {\
+                        display: block;\
+                    }\
+                </style>\
+            </head>\
+            <body>\
+                <nav><h1>Activate Test</h1></nav>\
+                <div><a href='/changeProgram'>Back</a></div>\
+                <form method='post' action=''>\
+                    <input type='submit' value='Activate'>\
+                </form>\
+            </body>\
+        </html>"));
+    userServer.send(200, F("text/html"), body);
 }
 
 void serveUserChangeProgramTestSubmit() {
-  changeProgram(PROGRAM_TEST);
+    Debug.println(F("serveUserChangeProgramTestSubmit"));
 
-  WiFiClient client = userServer.client();
-  String body = "";
-  body.reserve(2048);
-  body.concat(F("\
-      <html>\
-        <head>\
-            <title>GymClock</title>\
-            <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
-            <meta http-equiv='refresh' content='3;url=/'>\
-            <link rel='stylesheet' href='/stylesheet.css'>\
-            <style>\
-                nav {\
-                    background-color: green;\
-                    color: white;\
-                }\
-            </style>\
-        </head>\
-        <body>\
-            <nav><h1>Success</h1></nav>\
-            <p><strong>Test</strong> program activated. Returning to main menu.</p>\
-        </body>\
-    </html>"));
-  userServer.send(200, F("text/html"), body);
+    changeProgram(PROGRAM_TEST);
+
+    WiFiClient client = userServer.client();
+    String body = "";
+    body.reserve(2048);
+    body.concat(F("\
+        <html>\
+            <head>\
+                <title>GymClock</title>\
+                <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+                <meta http-equiv='refresh' content='3;url=/'>\
+                <link rel='stylesheet' href='/stylesheet.css'>\
+                <style>\
+                    nav {\
+                        background-color: green;\
+                        color: white;\
+                    }\
+                </style>\
+            </head>\
+            <body>\
+                <nav><h1>Success</h1></nav>\
+                <p><strong>Test</strong> program activated. Returning to main menu.</p>\
+            </body>\
+        </html>"));
+    userServer.send(200, F("text/html"), body);
 }
 
 void serveUserChangeProgramCountdown() {
-  WiFiClient client = userServer.client();
-  String body = "";
-  body.reserve(2048);
-  body.concat(F("\
-    <html>\
-        <head>\
-            <title>GymClock</title>\
-            <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
-            <link rel='stylesheet' href='/stylesheet.css'>\
-            <style>\
-                nav {\
-                    background-color: black;\
-                    color: white;\
-                }\
-                form > * {\
-                    display: block;\
-                }\
-            </style>\
-        </head>\
-        <body>\
-            <nav><h1>Activate Countdown</h1></nav>\
-            <div><a href='/changeProgram'>Back</a></div>\
-            <form method='post' action=''>\
-                <div>\
-                    <strong>Sets</strong>\
-                    <div><label>Count <input type='number' name='sets' value='1' min='1' max='99' required></label></div>\
-                </div>\
-                <div>\
-                    <strong>Set Time</strong>\
-                    <div><label>Minutes <input type='number' name='setDurationMinutes' placeholder='0' min='0' max='60'></label></div>\
-                    <div><label>Seconds <input type='number' name='setDurationSeconds' placeholder='0' min='0' max='60'></label></div>\
-                </div>\
-                <div>\
-                    <strong>Rest Time</strong>\
-                    <div><label>Seconds <input type='number' name='restSeconds' placeholder='0' min='0' max='99'></label></div>\
-                </div>\
-                <div>\
-                    <strong>Preparation Time</strong>\
-                    <div><label>Seconds <input type='number' name='readySeconds' value='5' min='0' max='10' required></label></div>\
-                </div>\
-                <input type='submit' value='Activate'>\
-            </form>\
-        </body>\
-    </html>"));
-  userServer.send(200, F("text/html"), body);
+    Debug.println(F("serveUserChangeProgramCountdown"));
+
+    WiFiClient client = userServer.client();
+    String body = "";
+    body.reserve(2048);
+    body.concat(F("\
+        <html>\
+            <head>\
+                <title>GymClock</title>\
+                <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+                <link rel='stylesheet' href='/stylesheet.css'>\
+                <style>\
+                    nav {\
+                        background-color: black;\
+                        color: white;\
+                    }\
+                    form > * {\
+                        display: block;\
+                    }\
+                </style>\
+            </head>\
+            <body>\
+                <nav><h1>Activate Countdown</h1></nav>\
+                <div><a href='/changeProgram'>Back</a></div>\
+                <form method='post' action=''>\
+                    <div>\
+                        <strong>Sets</strong>\
+                        <div><label>Count <input type='number' name='sets' value='1' min='1' max='99' required></label></div>\
+                    </div>\
+                    <div>\
+                        <strong>Set Time</strong>\
+                        <div><label>Minutes <input type='number' name='setDurationMinutes' placeholder='0' min='0' max='60'></label></div>\
+                        <div><label>Seconds <input type='number' name='setDurationSeconds' placeholder='0' min='0' max='60'></label></div>\
+                    </div>\
+                    <div>\
+                        <strong>Rest Time</strong>\
+                        <div><label>Seconds <input type='number' name='restSeconds' placeholder='0' min='0' max='99'></label></div>\
+                    </div>\
+                    <div>\
+                        <strong>Preparation Time</strong>\
+                        <div><label>Seconds <input type='number' name='readySeconds' value='5' min='0' max='10' required></label></div>\
+                    </div>\
+                    <input type='submit' value='Activate'>\
+                </form>\
+            </body>\
+        </html>"));
+    userServer.send(200, F("text/html"), body);
 }
 
 void serveUserChangeProgramCountdownSubmit() {
-  int readySeconds = userServer.arg(F("readySeconds")).toInt();
-  readySeconds = constrain(readySeconds, 0, 10);
-  int sets = userServer.arg(F("sets")).toInt();
-  sets = constrain(sets, 1, 99);
-  unsigned long setDurationMinutes = userServer.hasArg(F("setDurationMinutes"))
-    ? userServer.arg(F("setDurationMinutes")).toInt()
-    : 0;
-  setDurationMinutes = constrain(setDurationMinutes, 0, 60);
-  unsigned long setDurationSeconds = userServer.hasArg(F("setDurationSeconds"))
-    ? userServer.arg(F("setDurationSeconds")).toInt()
-    : 0;
-  setDurationSeconds = constrain(setDurationSeconds, 0, 60);
-  unsigned long restSeconds = userServer.hasArg(F("restSeconds"))
-    ? userServer.arg(F("restSeconds")).toInt()
-    : 0;
-  restSeconds = constrain(restSeconds, 0, 99);
+    Debug.println(F("serveUserChangeProgramCountdownSubmit"));
 
-  unsigned long setDurationMillis = setDurationMinutes * MILLIS_PER_MINUTE
-    + setDurationSeconds * MILLIS_PER_SECOND;
+    int readySeconds = userServer.arg(F("readySeconds")).toInt();
+    readySeconds = constrain(readySeconds, 0, 10);
+    int sets = userServer.arg(F("sets")).toInt();
+    sets = constrain(sets, 1, 99);
+    unsigned long setDurationMinutes = userServer.hasArg(F("setDurationMinutes"))
+        ? userServer.arg(F("setDurationMinutes")).toInt()
+        : 0;
+    setDurationMinutes = constrain(setDurationMinutes, 0, 60);
+    unsigned long setDurationSeconds = userServer.hasArg(F("setDurationSeconds"))
+        ? userServer.arg(F("setDurationSeconds")).toInt()
+        : 0;
+    setDurationSeconds = constrain(setDurationSeconds, 0, 60);
+    unsigned long restSeconds = userServer.hasArg(F("restSeconds"))
+        ? userServer.arg(F("restSeconds")).toInt()
+        : 0;
+    restSeconds = constrain(restSeconds, 0, 99);
 
-  countdownProgram.sets = sets;
-  countdownProgram.readySeconds = readySeconds;
-  countdownProgram.setDurationMillis = setDurationMillis;
-  countdownProgram.restSeconds = restSeconds;
+    unsigned long setDurationMillis = setDurationMinutes * MILLIS_PER_MINUTE
+        + setDurationSeconds * MILLIS_PER_SECOND;
 
-  changeProgram(PROGRAM_COUNTDOWN);
+    countdownProgram.sets = sets;
+    countdownProgram.readySeconds = readySeconds;
+    countdownProgram.setDurationMillis = setDurationMillis;
+    countdownProgram.restSeconds = restSeconds;
 
-  WiFiClient client = userServer.client();
-  String body = "";
-  body.reserve(2048);
-  body.concat(F("\
-      <html>\
-        <head>\
-            <title>GymClock</title>\
-            <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
-            <meta http-equiv='refresh' content='3;url=/'>\
-            <link rel='stylesheet' href='/stylesheet.css'>\
-            <style>\
-                nav {\
-                    background-color: green;\
-                    color: white;\
-                }\
-            </style>\
-        </head>\
-        <body>\
-            <nav><h1>Success</h1></nav>\
-            <p><strong>Countdown</strong> program activated. Returning to main menu.</p>\
-        </body>\
-    </html>"));
-  userServer.send(200, F("text/html"), body);
+    changeProgram(PROGRAM_COUNTDOWN);
+
+    WiFiClient client = userServer.client();
+    String body = "";
+    body.reserve(2048);
+    body.concat(F("\
+        <html>\
+            <head>\
+                <title>GymClock</title>\
+                <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+                <meta http-equiv='refresh' content='3;url=/'>\
+                <link rel='stylesheet' href='/stylesheet.css'>\
+                <style>\
+                    nav {\
+                        background-color: green;\
+                        color: white;\
+                    }\
+                </style>\
+            </head>\
+            <body>\
+                <nav><h1>Success</h1></nav>\
+                <p><strong>Countdown</strong> program activated. Returning to main menu.</p>\
+            </body>\
+        </html>"));
+    userServer.send(200, F("text/html"), body);
 }
 
 void serveUserChangeProgramStopwatch() {
-  WiFiClient client = userServer.client();
-  String body = "";
-  body.reserve(2048);
-  body.concat(F("\
-    <html>\
-        <head>\
-            <title>GymClock</title>\
-            <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
-            <link rel='stylesheet' href='/stylesheet.css'>\
-            <style>\
-                nav {\
-                    background-color: black;\
-                    color: white;\
-                }\
-                form > * {\
-                    display: block;\
-                }\
-            </style>\
-        </head>\
-        <body>\
-            <nav><h1>Activate Stopwatch</h1></nav>\
-            <div><a href='/changeProgram'>Back</a></div>\
-            <form method='post' action=''>\
-                <div>\
-                    <strong>Beep Interval</strong> (leave 0 to disable)\
-                    <div><label>Minutes <input type='number' name='beepIntervalMinutes' placeholder='0' min='0' max='60'></label></div>\
-                    <div><label>Seconds <input type='number' name='beepIntervalSeconds' placeholder='0' min='0' max='60'></label></div>\
-                </div>\
-                <input type='submit' value='Activate'>\
-            </form>\
-        </body>\
-    </html>"));
-  userServer.send(200, F("text/html"), body);
+    Debug.println(F("serveUserChangeProgramStopwatch"));
+
+    WiFiClient client = userServer.client();
+    String body = "";
+    body.reserve(2048);
+    body.concat(F("\
+        <html>\
+            <head>\
+                <title>GymClock</title>\
+                <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+                <link rel='stylesheet' href='/stylesheet.css'>\
+                <style>\
+                    nav {\
+                        background-color: black;\
+                        color: white;\
+                    }\
+                    form > * {\
+                        display: block;\
+                    }\
+                </style>\
+            </head>\
+            <body>\
+                <nav><h1>Activate Stopwatch</h1></nav>\
+                <div><a href='/changeProgram'>Back</a></div>\
+                <form method='post' action=''>\
+                    <div>\
+                        <strong>Beep Interval</strong> (leave 0 to disable)\
+                        <div><label>Minutes <input type='number' name='beepIntervalMinutes' placeholder='0' min='0' max='60'></label></div>\
+                        <div><label>Seconds <input type='number' name='beepIntervalSeconds' placeholder='0' min='0' max='60'></label></div>\
+                    </div>\
+                    <input type='submit' value='Activate'>\
+                </form>\
+            </body>\
+        </html>"));
+    userServer.send(200, F("text/html"), body);
 }
 
 void serveUserChangeProgramStopwatchSubmit() {
-  unsigned long beepIntervalMinutes = userServer.hasArg(F("beepIntervalMinutes"))
-    ? userServer.arg(F("beepIntervalMinutes")).toInt()
-    : 0;
-  beepIntervalMinutes = constrain(beepIntervalMinutes, 0, 60);
-  unsigned long beepIntervalSeconds = userServer.hasArg(F("beepIntervalSeconds"))
-    ? userServer.arg(F("beepIntervalSeconds")).toInt()
-    : 0;
-  beepIntervalSeconds = constrain(beepIntervalSeconds, 0, 60);
+    Debug.println(F("serveUserChangeProgramStopwatchSubmit"));
 
-  unsigned long beepIntervalMillis = beepIntervalMinutes * MILLIS_PER_MINUTE
-    + beepIntervalSeconds * MILLIS_PER_SECOND;
+    unsigned long beepIntervalMinutes = userServer.hasArg(F("beepIntervalMinutes"))
+        ? userServer.arg(F("beepIntervalMinutes")).toInt()
+        : 0;
+    beepIntervalMinutes = constrain(beepIntervalMinutes, 0, 60);
+    unsigned long beepIntervalSeconds = userServer.hasArg(F("beepIntervalSeconds"))
+        ? userServer.arg(F("beepIntervalSeconds")).toInt()
+        : 0;
+    beepIntervalSeconds = constrain(beepIntervalSeconds, 0, 60);
 
-  stopwatchProgram.beepIntervalMillis = beepIntervalMillis;
-  changeProgram(PROGRAM_STOPWATCH);
+    unsigned long beepIntervalMillis = beepIntervalMinutes * MILLIS_PER_MINUTE
+        + beepIntervalSeconds * MILLIS_PER_SECOND;
 
-  WiFiClient client = userServer.client();
-  String body = "";
-  body.reserve(2048);
-  body.concat(F("\
-      <html>\
-        <head>\
-            <title>GymClock</title>\
-            <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
-            <meta http-equiv='refresh' content='3;url=/'>\
-            <link rel='stylesheet' href='/stylesheet.css'>\
-            <style>\
-                nav {\
-                    background-color: green;\
-                    color: white;\
-                }\
-            </style>\
-        </head>\
-        <body>\
-            <nav><h1>Success</h1></nav>\
-            <p><strong>Stopwatch</strong> program activated. Returning to main menu.</p>\
-        </body>\
-    </html>"));
-  userServer.send(200, F("text/html"), body);
+    stopwatchProgram.beepIntervalMillis = beepIntervalMillis;
+    changeProgram(PROGRAM_STOPWATCH);
+
+    WiFiClient client = userServer.client();
+    String body = "";
+    body.reserve(2048);
+    body.concat(F("\
+        <html>\
+            <head>\
+                <title>GymClock</title>\
+                <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+                <meta http-equiv='refresh' content='3;url=/'>\
+                <link rel='stylesheet' href='/stylesheet.css'>\
+                <style>\
+                    nav {\
+                        background-color: green;\
+                        color: white;\
+                    }\
+                </style>\
+            </head>\
+            <body>\
+                <nav><h1>Success</h1></nav>\
+                <p><strong>Stopwatch</strong> program activated. Returning to main menu.</p>\
+            </body>\
+        </html>"));
+    userServer.send(200, F("text/html"), body);
 }
 
 void serveUserChangeProgramScoredCountdown() {
-  WiFiClient client = userServer.client();
-  String body = "";
-  body.reserve(2048);
-  body.concat(F("\
-    <html>\
-        <head>\
-            <title>GymClock</title>\
-            <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
-            <link rel='stylesheet' href='/stylesheet.css'>\
-            <style>\
-                nav {\
-                    background-color: black;\
-                    color: white;\
-                }\
-                form > * {\
-                    display: block;\
-                }\
-            </style>\
-        </head>\
-        <body>\
-            <nav><h1>Activate Scored Countdown</h1></nav>\
-            <div><a href='/changeProgram'>Back</a></div>\
-            <form method='post' action=''>\
-                <div>\
-                    <strong>Countdown Time</strong>\
-                    <div><label>Minutes <input type='number' name='durationMinutes' placeholder='0' min='0' max='60'></label></div>\
-                    <div><label>Seconds <input type='number' name='durationSeconds' placeholder='0' min='0' max='60'></label></div>\
-                </div>\
-                <div>\
-                    <strong>Initial Scores</strong>\
-                    <div><label>Left <input type='number' name='leftScore' placeholder='0' min='0' max='99'></label></div>\
-                    <div><label>Right <input type='number' name='rightScore' placeholder='0' min='0' max='99'></label></div>\
-                </div>\
-                <div>\
-                    <strong>Preparation Time</strong>\
-                    <div><label>Seconds <input type='number' name='readySeconds' placeholder='5' min='0' max='10'></label></div>\
-                </div>\
-                <input type='submit' value='Activate'>\
-            </form>\
-        </body>\
-    </html>"));
-  userServer.send(200, F("text/html"), body);
+    Debug.println(F("serveUserChangeProgramScoredCountdown"));
+
+    WiFiClient client = userServer.client();
+    String body = "";
+    body.reserve(2048);
+    body.concat(F("\
+        <html>\
+            <head>\
+                <title>GymClock</title>\
+                <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+                <link rel='stylesheet' href='/stylesheet.css'>\
+                <style>\
+                    nav {\
+                        background-color: black;\
+                        color: white;\
+                    }\
+                    form > * {\
+                        display: block;\
+                    }\
+                </style>\
+            </head>\
+            <body>\
+                <nav><h1>Activate Scored Countdown</h1></nav>\
+                <div><a href='/changeProgram'>Back</a></div>\
+                <form method='post' action=''>\
+                    <div>\
+                        <strong>Countdown Time</strong>\
+                        <div><label>Minutes <input type='number' name='durationMinutes' placeholder='0' min='0' max='60'></label></div>\
+                        <div><label>Seconds <input type='number' name='durationSeconds' placeholder='0' min='0' max='60'></label></div>\
+                    </div>\
+                    <div>\
+                        <strong>Initial Scores</strong>\
+                        <div><label>Left <input type='number' name='leftScore' placeholder='0' min='0' max='99'></label></div>\
+                        <div><label>Right <input type='number' name='rightScore' placeholder='0' min='0' max='99'></label></div>\
+                    </div>\
+                    <div>\
+                        <strong>Preparation Time</strong>\
+                        <div><label>Seconds <input type='number' name='readySeconds' placeholder='5' min='0' max='10'></label></div>\
+                    </div>\
+                    <input type='submit' value='Activate'>\
+                </form>\
+            </body>\
+        </html>"));
+    userServer.send(200, F("text/html"), body);
 }
 
 void serveUserChangeProgramScoredCountdownSubmit() {
-  // TODO: hasArg returns true for ""!
-  int readySeconds = userServer.hasArg(F("readySeconds"))
-    ? userServer.arg(F("readySeconds")).toInt()
-    : 5;
-  readySeconds = constrain(readySeconds, 0, 10);
-  unsigned long durationMinutes = userServer.hasArg(F("durationMinutes"))
-    ? userServer.arg(F("durationMinutes")).toInt()
-    : 0;
-  durationMinutes = constrain(durationMinutes, 0, 60);
-  unsigned long durationSeconds = userServer.hasArg(F("durationSeconds"))
-    ? userServer.arg(F("durationSeconds")).toInt()
-    : 0;
-  durationSeconds = constrain(durationSeconds, 0, 60);
-  int leftScore = userServer.hasArg(F("leftScore"))
-    ? userServer.arg(F("leftScore")).toInt()
-    : 0;
-  leftScore = constrain(leftScore, 0, 99);
-  int rightScore = userServer.hasArg(F("rightScore"))
-    ? userServer.arg(F("rightScore")).toInt()
-    : 0;
-  rightScore = constrain(rightScore, 0, 99);
+    Debug.println(F("serveUserChangeProgramScoredCountdownSubmit"));
 
-  unsigned long durationMillis = durationMinutes * MILLIS_PER_MINUTE
-    + durationSeconds * MILLIS_PER_SECOND;
+    // TODO: hasArg returns true for ""!
+    int readySeconds = userServer.hasArg(F("readySeconds"))
+        ? userServer.arg(F("readySeconds")).toInt()
+        : 5;
+    readySeconds = constrain(readySeconds, 0, 10);
+    unsigned long durationMinutes = userServer.hasArg(F("durationMinutes"))
+        ? userServer.arg(F("durationMinutes")).toInt()
+        : 0;
+    durationMinutes = constrain(durationMinutes, 0, 60);
+    unsigned long durationSeconds = userServer.hasArg(F("durationSeconds"))
+        ? userServer.arg(F("durationSeconds")).toInt()
+        : 0;
+    durationSeconds = constrain(durationSeconds, 0, 60);
+    int leftScore = userServer.hasArg(F("leftScore"))
+        ? userServer.arg(F("leftScore")).toInt()
+        : 0;
+    leftScore = constrain(leftScore, 0, 99);
+    int rightScore = userServer.hasArg(F("rightScore"))
+        ? userServer.arg(F("rightScore")).toInt()
+        : 0;
+    rightScore = constrain(rightScore, 0, 99);
 
-  Debug.printf("Setting ScoredCountdown settings to readySeconds=%d, durationMillis=%d, leftScore=%d, rightScore=%d\r\n",
-      readySeconds, durationMillis, leftScore, rightScore);
-  scoredCountdownProgram.readySeconds = readySeconds;
-  scoredCountdownProgram.durationMillis = durationMillis;
-  scoredCountdownProgram.leftScore = leftScore;
-  scoredCountdownProgram.rightScore = rightScore;
+    unsigned long durationMillis = durationMinutes * MILLIS_PER_MINUTE
+        + durationSeconds * MILLIS_PER_SECOND;
 
-  changeProgram(PROGRAM_SCORED_COUNTDOWN);
+    Debug.printf("Setting ScoredCountdown settings to readySeconds=%d, durationMillis=%d, leftScore=%d, rightScore=%d\r\n",
+        readySeconds, durationMillis, leftScore, rightScore);
+    scoredCountdownProgram.readySeconds = readySeconds;
+    scoredCountdownProgram.durationMillis = durationMillis;
+    scoredCountdownProgram.leftScore = leftScore;
+    scoredCountdownProgram.rightScore = rightScore;
 
-  WiFiClient client = userServer.client();
-  String body = "";
-  body.reserve(2048);
-  body.concat(F("\
-      <html>\
-        <head>\
-            <title>GymClock</title>\
-            <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
-            <link rel='stylesheet' href='/stylesheet.css'>\
-            <meta http-equiv='refresh' content='3;url=/'>\
-            <style>\
-                nav {\
-                    background-color: green;\
-                    color: white;\
-                }\
-            </style>\
-        </head>\
-        <body>\
-            <nav><h1>Success</h1></nav>\
-            <p><strong>Scored Countdown</strong> program activated. Returning to main menu.</p>\
-        </body>\
-    </html>"));
-  userServer.send(200, F("text/html"), body);
+    changeProgram(PROGRAM_SCORED_COUNTDOWN);
+
+    WiFiClient client = userServer.client();
+    String body = "";
+    body.reserve(2048);
+    body.concat(F("\
+        <html>\
+            <head>\
+                <title>GymClock</title>\
+                <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+                <link rel='stylesheet' href='/stylesheet.css'>\
+                <meta http-equiv='refresh' content='3;url=/'>\
+                <style>\
+                    nav {\
+                        background-color: green;\
+                        color: white;\
+                    }\
+                </style>\
+            </head>\
+            <body>\
+                <nav><h1>Success</h1></nav>\
+                <p><strong>Scored Countdown</strong> program activated. Returning to main menu.</p>\
+            </body>\
+        </html>"));
+    userServer.send(200, F("text/html"), body);
 }
 
 void serveUserReboot() {
-  WiFiClient client = userServer.client();
-  String body = "";
-  body.reserve(2048);
-  body.concat(F("\
-      <html>\
-        <head>\
-            <title>GymClock</title>\
-            <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
-            <link rel='stylesheet' href='/stylesheet.css'>\
-            <style>\
-                .nav {\
-                    background-color: red;\
-                    color: white;\
-                }\
-            </style>\
-        </head>\
-        <body>\
-            <nav class='nav'>\
-                <h1>GymClock</h1>\
-            </nav>\
-            <div>\
-                <h2>Confirm Restart</h2>\
-                <form action='rebootSubmit' method='post'>\
-                    <p>Are you sure you want to reboot the system?<p>\
-                    <p>If not, navigate back to the previous page.</p>\
-                    <input type='submit' value='Reboot'>\
-                </form>\
-            </div>\
-        </body>\
-    </html>"));
-  userServer.send(200, F("text/html"), body);
+    Debug.println(F("serveUserReboot"));
+
+    WiFiClient client = userServer.client();
+    String body = "";
+    body.reserve(2048);
+    body.concat(F("\
+        <html>\
+            <head>\
+                <title>GymClock</title>\
+                <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+                <link rel='stylesheet' href='/stylesheet.css'>\
+                <style>\
+                    .nav {\
+                        background-color: red;\
+                        color: white;\
+                    }\
+                </style>\
+            </head>\
+            <body>\
+                <nav class='nav'>\
+                    <h1>GymClock</h1>\
+                </nav>\
+                <div>\
+                    <h2>Confirm Restart</h2>\
+                    <form action='rebootSubmit' method='post'>\
+                        <p>Are you sure you want to reboot the system?<p>\
+                        <p>If not, navigate back to the previous page.</p>\
+                        <input type='submit' value='Reboot'>\
+                    </form>\
+                </div>\
+            </body>\
+        </html>"));
+    userServer.send(200, F("text/html"), body);
 }
 
 void serveUserRebootSubmit() {
-  WiFiClient client = userServer.client();
-  String body = "";
-  body.reserve(2048);
-  body.concat(F("\
-      <html>\
-        <head>\
-            <title>GymClock</title>\
-            <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
-            <link rel='stylesheet' href='/stylesheet.css'>\
-            <style>\
-                .nav {\
-                    background-color: green;\
-                    color: white;\
-                }\
-            </style>\
-        </head>\
-        <body>\
-            <nav class='nav'>\
-                <h1>GymClock</h1>\
-            </nav>\
-            <div>\
-                <h2>Restarted</h2>\
-                <p>Adios, amigo. System going down for reboot NOW!</p>\
-            </div>\
-        </body>\
-    </html>"));
-  userServer.send(200, F("text/html"), body);
+    Debug.println(F("serveUserRebootSubmit"));
 
-  Debug.println(F("Rebooting due to user request"));
-  delay(100);
-  ESP.restart();
+    WiFiClient client = userServer.client();
+    String body = "";
+    body.reserve(2048);
+    body.concat(F("\
+        <html>\
+            <head>\
+                <title>GymClock</title>\
+                <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+                <link rel='stylesheet' href='/stylesheet.css'>\
+                <style>\
+                    .nav {\
+                        background-color: green;\
+                        color: white;\
+                    }\
+                </style>\
+            </head>\
+            <body>\
+                <nav class='nav'>\
+                    <h1>GymClock</h1>\
+                </nav>\
+                <div>\
+                    <h2>Restarted</h2>\
+                    <p>Adios, amigo. System going down for reboot NOW!</p>\
+                </div>\
+            </body>\
+        </html>"));
+    userServer.send(200, F("text/html"), body);
+
+    Debug.println(F("Rebooting due to user request"));
+    delay(100);
+    ESP.restart();
 }
 
 void serveUserEnableUdpDebug() {
-  serveSharedEnableUdpDebug(userServer, F("GymClock"));
+    Debug.println(F("serveUserEnableUdpDebug"));
+    serveSharedEnableUdpDebug(userServer, F("GymClock"));
 }
 
 void serveUserEnableUdpDebugSubmit() {
-  serveSharedEnableUdpDebugSubmit(userServer, F("GymClock"));
+    Debug.println(F("serveUserEnableUdpDebugSubmit"));
+    serveSharedEnableUdpDebugSubmit(userServer, F("GymClock"));
 }
 
 void serveUserDisableUdpDebug() {
-  serveSharedDisableUdpDebug(userServer, F("GymClock"));
+    Debug.println(F("serveUserDisableUdpDebug"));
+    serveSharedDisableUdpDebug(userServer, F("GymClock"));
 }
 
 void serveUserDisableUdpDebugSubmit() {
-  serveSharedDisableUdpDebugSubmit(userServer, F("GymClock"));
+    Debug.println(F("serveUserDisableUdpDebugSubmit"));
+    serveSharedDisableUdpDebugSubmit(userServer, F("GymClock"));
 }
 
 void serveUserScoredCountdownIncrementLeft() {
-  if (scoredCountdownProgram.leftScore < 99) {
-    scoredCountdownProgram.leftScore += 1;
-  }
-  serveUserIndex();
+    Debug.println(F("serveUserScoredCountdownIncrementLeft"));
+    if (scoredCountdownProgram.leftScore < 99) {
+        scoredCountdownProgram.leftScore += 1;
+    }
+    serveUserIndex();
 }
 
 void serveUserScoredCountdownIncrementRight() {
-  if (scoredCountdownProgram.rightScore < 99) {
-    scoredCountdownProgram.rightScore += 1;
-  }
-  serveUserIndex();
+    Debug.println(F("serveUserScoredCountdownIncrementRight"));
+    if (scoredCountdownProgram.rightScore < 99) {
+        scoredCountdownProgram.rightScore += 1;
+    }
+    serveUserIndex();
 }
 
 void serveUserScoredCountdownDecrementLeft() {
-  if (scoredCountdownProgram.leftScore > 0) {
-    scoredCountdownProgram.leftScore -= 1;
-  }
-  serveUserIndex();
+    Debug.println(F("serveUserScoredCountdownDecrementLeft"));
+    if (scoredCountdownProgram.leftScore > 0) {
+        scoredCountdownProgram.leftScore -= 1;
+    }
+    serveUserIndex();
 }
 
 void serveUserScoredCountdownDecrementRight() {
-  if (scoredCountdownProgram.rightScore > 0) {
-    scoredCountdownProgram.rightScore -= 1;
-  }
-  serveUserIndex();
+    Debug.println(F("serveUserScoredCountdownDecrementRight"));
+    if (scoredCountdownProgram.rightScore > 0) {
+        scoredCountdownProgram.rightScore -= 1;
+    }
+    serveUserIndex();
 }
 
 void serveUserDebugDump() {
-  Debug.dump();
-  serveUserIndex();
+    Debug.println(F("serveUserDebugDump"));
+    Debug.dump();
+    serveUserIndex();
 }
 
 void serveUserStylesheet() {
-  serveSharedStylesheet(userServer);
+    Debug.println(F("serveUserStylesheet"));
+    serveSharedStylesheet(userServer);
 }
 
 void setupUserUI() {
