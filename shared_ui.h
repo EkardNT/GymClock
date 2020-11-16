@@ -4,6 +4,8 @@
 #include <Arduino.h>
 #include <ESP8266WebServer.h>
 
+bool hasArg(ESP8266WebServer & server, const __FlashStringHelper * argName);
+
 void serveSharedStylesheet(ESP8266WebServer & server);
 void serveSharedEnableUdpDebug(ESP8266WebServer & server, const __FlashStringHelper * title);
 void serveSharedEnableUdpDebugSubmit(ESP8266WebServer & server, const __FlashStringHelper * title);

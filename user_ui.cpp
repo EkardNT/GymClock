@@ -188,7 +188,7 @@ void serveUserChangeProgramClockSubmit() {
     Debug.println(F("serveUserChangeProgramClockSubmit"));
 
     String newTimezoneId = userServer.arg(F("timezoneId"));
-    clockProgram.format24 = userServer.hasArg(F("format24"));
+    clockProgram.format24 = hasArg(userServer, F("format24"));
 
     changeProgram(PROGRAM_CLOCK);
 
@@ -337,15 +337,15 @@ void serveUserChangeProgramCountdownSubmit() {
     readySeconds = constrain(readySeconds, 0, 10);
     int sets = userServer.arg(F("sets")).toInt();
     sets = constrain(sets, 1, 99);
-    unsigned long setDurationMinutes = userServer.hasArg(F("setDurationMinutes"))
+    unsigned long setDurationMinutes = hasArg(userServer, F("setDurationMinutes"))
         ? userServer.arg(F("setDurationMinutes")).toInt()
         : 0;
     setDurationMinutes = constrain(setDurationMinutes, 0, 60);
-    unsigned long setDurationSeconds = userServer.hasArg(F("setDurationSeconds"))
+    unsigned long setDurationSeconds = hasArg(userServer, F("setDurationSeconds"))
         ? userServer.arg(F("setDurationSeconds")).toInt()
         : 0;
     setDurationSeconds = constrain(setDurationSeconds, 0, 60);
-    unsigned long restSeconds = userServer.hasArg(F("restSeconds"))
+    unsigned long restSeconds = hasArg(userServer, F("restSeconds"))
         ? userServer.arg(F("restSeconds")).toInt()
         : 0;
     restSeconds = constrain(restSeconds, 0, 99);
@@ -426,11 +426,11 @@ void serveUserChangeProgramStopwatch() {
 void serveUserChangeProgramStopwatchSubmit() {
     Debug.println(F("serveUserChangeProgramStopwatchSubmit"));
 
-    unsigned long beepIntervalMinutes = userServer.hasArg(F("beepIntervalMinutes"))
+    unsigned long beepIntervalMinutes = hasArg(userServer, F("beepIntervalMinutes"))
         ? userServer.arg(F("beepIntervalMinutes")).toInt()
         : 0;
     beepIntervalMinutes = constrain(beepIntervalMinutes, 0, 60);
-    unsigned long beepIntervalSeconds = userServer.hasArg(F("beepIntervalSeconds"))
+    unsigned long beepIntervalSeconds = hasArg(userServer, F("beepIntervalSeconds"))
         ? userServer.arg(F("beepIntervalSeconds")).toInt()
         : 0;
     beepIntervalSeconds = constrain(beepIntervalSeconds, 0, 60);
@@ -516,24 +516,23 @@ void serveUserChangeProgramScoredCountdown() {
 void serveUserChangeProgramScoredCountdownSubmit() {
     Debug.println(F("serveUserChangeProgramScoredCountdownSubmit"));
 
-    // TODO: hasArg returns true for ""!
-    int readySeconds = userServer.hasArg(F("readySeconds"))
+    int readySeconds = hasArg(userServer, F("readySeconds"))
         ? userServer.arg(F("readySeconds")).toInt()
         : 5;
     readySeconds = constrain(readySeconds, 0, 10);
-    unsigned long durationMinutes = userServer.hasArg(F("durationMinutes"))
+    unsigned long durationMinutes = hasArg(userServer, F("durationMinutes"))
         ? userServer.arg(F("durationMinutes")).toInt()
         : 0;
     durationMinutes = constrain(durationMinutes, 0, 60);
-    unsigned long durationSeconds = userServer.hasArg(F("durationSeconds"))
+    unsigned long durationSeconds = hasArg(userServer, F("durationSeconds"))
         ? userServer.arg(F("durationSeconds")).toInt()
         : 0;
     durationSeconds = constrain(durationSeconds, 0, 60);
-    int leftScore = userServer.hasArg(F("leftScore"))
+    int leftScore = hasArg(userServer, F("leftScore"))
         ? userServer.arg(F("leftScore")).toInt()
         : 0;
     leftScore = constrain(leftScore, 0, 99);
-    int rightScore = userServer.hasArg(F("rightScore"))
+    int rightScore = hasArg(userServer, F("rightScore"))
         ? userServer.arg(F("rightScore")).toInt()
         : 0;
     rightScore = constrain(rightScore, 0, 99);

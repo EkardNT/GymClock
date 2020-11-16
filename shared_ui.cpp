@@ -2,6 +2,10 @@
 #include "shared_ui.h"
 #include "debug.h"
 
+bool hasArg(ESP8266WebServer & server, const __FlashStringHelper * argName) {
+    return server.hasArg(argName) && server.arg(argName).length() > 0;
+}
+
 void serveSharedEnableUdpDebug(ESP8266WebServer & server, const __FlashStringHelper * title) {
   WiFiClient client = server.client();
   String body = "";
