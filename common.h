@@ -21,23 +21,6 @@ const IPAddress AP_LOCAL_IP(192, 168, 4, 22);
 const IPAddress AP_GATEWAY(192, 168, 4, 9);
 const IPAddress AP_SUBNET_MASK(255, 255, 255, 0);
 
-const int MAX_SSID_SIZE = 32;
-const int MAX_PASSWORD_SIZE = 32;
-
-extern char wifiSSID[MAX_SSID_SIZE + 1];
-extern char wifiPassword[MAX_PASSWORD_SIZE + 1];
-
-// EEPROM offsets.
-// 1 byte for ssid field length
-// MAX_SSID_SIZE for ssid field
-// 1 byte for password field length
-// MAX_PASSWORD_SIZE for password field
-const int EEPROM_SIZE = 2 + MAX_SSID_SIZE + MAX_PASSWORD_SIZE;
-const int SSID_LEN_EEPROM_ADDR = 0;
-const int SSID_EEPROM_ADDR = 1 + SSID_LEN_EEPROM_ADDR;
-const int PASSWORD_LEN_EEPROM_ADDR = SSID_EEPROM_ADDR + MAX_SSID_SIZE;
-const int PASSWORD_EEPROM_ADDR = 1 + PASSWORD_LEN_EEPROM_ADDR;
-
 // SER
 const int srDataPin = D3;
 // RCLK
@@ -137,7 +120,5 @@ char * formatIntoTemp(IPAddress val);
 char * formatIntoTemp(long val);
 
 char * formatFloatIntoTemp(float val);
-
-void updateWiFiSettings(String newSSID, String newPassword);
 
 #endif

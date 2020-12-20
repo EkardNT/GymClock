@@ -5,6 +5,7 @@
 #include "debug.h"
 #include "common.h"
 #include "shared_ui.h"
+#include "settings.h"
 
 extern ESP8266WebServer adminServer;
 
@@ -220,7 +221,7 @@ void serveAdminChangeWiFi() {
                     will use to join the wireless network.</p>\
                     <p>Don't use passwords with single-quotes in them, because this form uses raw\
                     string interpolation which would break. Also open to injection attacks of course!</p>\
-                    <p>SSID can be at most $MAX_SSID_SIZE bytes. Password can be at most $MAX_PASSWORD_SIZE bytes.</p>\
+                    <p>SSID can be at most $MAX_SSID_LENGTH bytes. Password can be at most $MAX_PASSWORD_LENGTH bytes.</p>\
                     <form action='changeWiFiSubmit' method='post'>\
                         <div>\
                             <label for='ssid'>SSID</label>\
@@ -237,52 +238,83 @@ void serveAdminChangeWiFi() {
         </html>"));
     // Note that wifiSSID and wifiPassword are trivially empty strings if
     // they are not present.
-    body.replace(F("$CURRENT_SSID"), wifiSSID);
-    body.replace(F("$CURRENT_PASSWORD"), wifiPassword);
-    body.replace(F("$MAX_SSID_SIZE"), formatIntoTemp(MAX_SSID_SIZE));
-    body.replace(F("$MAX_PASSWORD_SIZE"), formatIntoTemp(MAX_PASSWORD_SIZE));
+    body.replace(F("$CURRENT_SSID"), getWifiSsid());
+    body.replace(F("$CURRENT_PASSWORD"), getWifiPassword());
+    body.replace(F("$MAX_SSID_LENGTH"), formatIntoTemp(MAX_SSID_LENGTH));
+    body.replace(F("$MAX_PASSWORD_LENGTH"), formatIntoTemp(MAX_PASSWORD_LENGTH));
     adminServer.send(200, F("text/html"), body);
 }
 
 void serveAdminChangeWiFiSubmit() {
     Debug.println(F("serveAdminChangeWiFiSubmit"));
 
-    String newSSID = adminServer.arg(F("ssid"));
-    String newPassword = adminServer.arg(F("password"));
-    updateWiFiSettings(newSSID, newPassword);
-
     WiFiClient client = adminServer.client();
     String body = "";
     body.reserve(2048);
-    body.concat(F("\
-        <html>\
-            <head>\
-                <title>GymClock Admin</title>\
-                <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
-                <link rel='stylesheet' href='/stylesheet.css'>\
-                <style>\
-                    .nav {\
-                        background-color: green;\
-                        color: white;\
-                    }\
-                </style>\
-            </head>\
-            <body>\
-                <nav class='nav'>\
-                    <h1>GymClock Admin</h1>\
-                </nav>\
-                <div>\
-                    <h2>Changed WiFi Settings</h2>\
-                    <p>SSID changed to <strong>$CURRENT_SSID</strong>.</p>\
-                    <p>Password changed to <strong>$CURRENT_PASSWORD</strong>.</p>\
-                    <a href='/'>Back to main menu</a>\
-                </div>\
-            </body>\
-        </html>"));
-    body.replace(F("$CURRENT_SSID"), wifiSSID);
-    body.replace(F("$CURRENT_PASSWORD"), wifiPassword);
-    body.replace(F("$MAX_SSID_SIZE"), formatIntoTemp(MAX_SSID_SIZE));
-    body.replace(F("$MAX_PASSWORD_SIZE"), formatIntoTemp(MAX_PASSWORD_SIZE));
+
+    String newSSID = adminServer.arg(F("ssid"));
+    String newPassword = adminServer.arg(F("password"));
+    if (!setWifiSsid(newSSID) || !setWifiPassword(newPassword)) {
+        // Unable to set.
+        body.concat(F("\
+            <html>\
+                <head>\
+                    <title>GymClock Admin</title>\
+                    <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+                    <link rel='stylesheet' href='/stylesheet.css'>\
+                    <style>\
+                        .nav {\
+                            background-color: red;\
+                            color: white;\
+                        }\
+                    </style>\
+                </head>\
+                <body>\
+                    <nav class='nav'>\
+                        <h1>GymClock Admin</h1>\
+                    </nav>\
+                    <div>\
+                        <h2>Error - WiFi not changed!</h2>\
+                        <p>Unable to update the WiFi settings because of a validation error.</p>\
+                        <p>The max length of the SSID is $MAX_SSID_LENGTH. The max length of the password is $MAX_PASSWORD_LENGTH.</p>\
+                        <a href='/changeWiFi'>Back</a>\
+                    </div>\
+                </body>\
+            </html>"));
+    } else {
+        // Set successfully. Immediately write-through to persistent storage.
+        storeSettings();
+        body.concat(F("\
+            <html>\
+                <head>\
+                    <title>GymClock Admin</title>\
+                    <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+                    <link rel='stylesheet' href='/stylesheet.css'>\
+                    <style>\
+                        .nav {\
+                            background-color: green;\
+                            color: white;\
+                        }\
+                    </style>\
+                </head>\
+                <body>\
+                    <nav class='nav'>\
+                        <h1>GymClock Admin</h1>\
+                    </nav>\
+                    <div>\
+                        <h2>Changed WiFi Settings</h2>\
+                        <p>SSID changed to <strong>$CURRENT_SSID</strong>.</p>\
+                        <p>Password changed to <strong>$CURRENT_PASSWORD</strong>.</p>\
+                        <a href='/'>Back to main menu</a>\
+                    </div>\
+                </body>\
+            </html>"));
+    }
+
+    body.replace(F("$CURRENT_SSID"), newSSID);
+    body.replace(F("$CURRENT_PASSWORD"), newPassword);
+    body.replace(F("$MAX_SSID_LENGTH"), formatIntoTemp(MAX_SSID_LENGTH));
+    body.replace(F("$MAX_PASSWORD_LENGTH"), formatIntoTemp(MAX_PASSWORD_LENGTH));
     adminServer.send(200, F("text/html"), body);
 }
 

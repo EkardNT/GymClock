@@ -16,6 +16,7 @@
 #include "debug.h"
 #include "admin_ui.h"
 #include "user_ui.h"
+#include "settings.h"
 
 using namespace ace_routine;
 using namespace ace_time;
@@ -40,12 +41,6 @@ NTPClient timeClient(ntpUDP);
 // Tracks whether the display has connected to a wifi network in station mode.
 bool networkActive = false;
 
-// If the SSID and password are present in EEPROM, then these buffers will
-// contain the null-terminated SSID and password. If the strlen of the
-// buffers is 0, then that field is not present.
-char wifiSSID[MAX_SSID_SIZE + 1] = {0};
-char wifiPassword[MAX_PASSWORD_SIZE + 1] = {0};
-
 byte displayState[NUM_DIGITS] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
 // All coroutine instances.
@@ -65,7 +60,8 @@ void setup() {
   Serial.println("Initializing");
   Serial.setDebugOutput(true);
 
-  initStoredSettings();
+  initSettings();
+  dumpSettings();
 
   WiFi.persistent(false);
   WiFi.mode(WIFI_AP_STA);
@@ -77,11 +73,15 @@ void setup() {
   WiFi.softAP(AP_SSID, AP_PASSWORD);
   WiFi.setAutoConnect(false);
   WiFi.setAutoReconnect(true);
-  if (strlen(wifiSSID) > 0 && strlen(wifiPassword) > 0) {
-    Debug.printf("Trying to log on to WiFi network %s in station mode.\n", wifiSSID);
-    WiFi.begin(wifiSSID, wifiPassword);
+
+  char const * wifiSsid = getWifiSsid();
+  char const * wifiPassword = getWifiPassword();
+
+  if (strlen(wifiSsid) > 0 && strlen(wifiPassword) > 0) {
+    Debug.printf("Trying to log on to WiFi network %s in station mode\n", wifiSsid);
+    WiFi.begin(wifiSsid, wifiPassword);
   } else {
-    Debug.println("One or more of wifiSSID or wifiPassword not available from EEPROM, not logging on to any network yet.");
+    Debug.println("Not logging onto network because WiFi SSID and/or password from settings is empty");
   }
 
   dnsServer.start(53, F("gymclock.local"), AP_LOCAL_IP);
@@ -145,24 +145,6 @@ void loop() {
   CoroutineScheduler::loop();
 }
 
-void initStoredSettings() {
-  EEPROM.begin(EEPROM_SIZE);
-  byte ssidSize = EEPROM.read(SSID_LEN_EEPROM_ADDR);
-  if (ssidSize > 0 && ssidSize <= MAX_SSID_SIZE) {
-    for (int i = 0; i < ssidSize; i++) {
-      wifiSSID[i] = EEPROM.read(SSID_EEPROM_ADDR + i);
-    }
-  }
-  Debug.printf("SSID size: %d, value: %s\n", strlen(wifiSSID), wifiSSID);
-  byte passwordSize = EEPROM.read(PASSWORD_LEN_EEPROM_ADDR);
-  if (passwordSize > 0 && passwordSize <= MAX_PASSWORD_SIZE) {
-    for (int i = 0; i < passwordSize; i++) {
-      wifiPassword[i] = EEPROM.read(PASSWORD_EEPROM_ADDR + i);
-    }
-  }
-  Debug.printf("Password size: %d, value: %s\n", strlen(wifiPassword), wifiPassword);
-}
-
 void networkInit(const WiFiEventStationModeGotIP& event) {
   Debug.println("networkInit");
 
@@ -183,49 +165,4 @@ void networkStop(const WiFiEventStationModeDisconnected& event) {
   webUpdateServer.stop();
   timeClient.end();
   networkActive = false;
-}
-
-void updateWiFiSettings(String newSSID, String newPassword) {
-  strncpy(wifiSSID, newSSID.c_str(), MAX_SSID_SIZE);
-  strncpy(wifiPassword, newPassword.c_str(), MAX_PASSWORD_SIZE);
-  byte ssidLen = newSSID.length();
-  if (ssidLen > MAX_SSID_SIZE) {
-    ssidLen = MAX_SSID_SIZE;
-    Debug.println(F("Truncating new SSID to MAX_SSID_SIZE"));
-  }
-  Debug.print(F("New SSID length is "));
-  Debug.println(ssidLen);
-  Debug.print(F("New SSID is "));
-  Debug.println(wifiSSID);
-  byte passwordLen = newPassword.length();
-  if (passwordLen > MAX_PASSWORD_SIZE) {
-    passwordLen = MAX_PASSWORD_SIZE;
-    Debug.println(F("Truncating new password to MAX_PASSWORD_SIZE"));
-  }
-  Debug.print(F("New password length is "));
-  Debug.println(passwordLen);
-  Debug.print(F("New password is "));
-  Debug.println(wifiPassword);
-  EEPROM.write(SSID_LEN_EEPROM_ADDR, ssidLen);
-  for (int i = 0; i < ssidLen; i++) {
-    EEPROM.write(SSID_EEPROM_ADDR + i, wifiSSID[i]);
-  }
-  for (int i = ssidLen; i < MAX_SSID_SIZE; i++) {
-    EEPROM.write(SSID_EEPROM_ADDR + i, 0);
-  }
-  EEPROM.write(PASSWORD_LEN_EEPROM_ADDR, passwordLen);
-  for (int i = 0; i < passwordLen; i++) {
-    EEPROM.write(PASSWORD_EEPROM_ADDR + i, wifiPassword[i]);
-  }
-  for (int i = passwordLen; i < MAX_PASSWORD_SIZE; i++) {
-    EEPROM.write(PASSWORD_EEPROM_ADDR + i, 0);
-  }
-  EEPROM.commit();
-
-  Debug.println("Disconnecting WiFi.");
-  WiFi.disconnect(false);
-  if (strlen(wifiSSID) > 0 && strlen(wifiPassword) > 0) {
-    Debug.println("Beginning WiFi.");
-    WiFi.begin(wifiSSID, wifiPassword);
-  }
 }
