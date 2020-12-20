@@ -88,7 +88,6 @@ void setup() {
 
   setupAdminUI();
   adminServer.begin();
-  adminServer.setNoDelay(true);
 
   // Unfortunately the NTP/UDP request is apparently implemented as a blocking call, so it causes a noticable flicker.
   // Extending the interval to 3600000 (1 hour) is a hack to make this less noticable. If I ever reimplement the sign
@@ -169,7 +168,6 @@ void networkInit(const WiFiEventStationModeGotIP& event) {
 
   setupUserUI();
   userServer.begin();
-  userServer.setNoDelay(true);
 
   httpUpdateServer.setup(&webUpdateServer);
   webUpdateServer.begin();
