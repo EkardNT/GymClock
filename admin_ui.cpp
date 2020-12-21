@@ -12,6 +12,40 @@ extern ESP8266WebServer adminServer;
 // serveAdminUI is defined at the bottom of the file so I don't have to worry about forward
 // declarations. Oh the joy of using a decades-old programming language...
 
+void serveErrorPage(const __FlashStringHelper * errorMessage, const __FlashStringHelper * backLink) {
+    WiFiClient client = adminServer.client();
+    String body = "";
+    body.reserve(2048);
+    body.concat(F("\
+        <html>\
+            <head>\
+                <title>GymClock Admin</title>\
+                <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+                <link rel='stylesheet' href='/stylesheet.css'>\
+                <style>\
+                    .nav {\
+                        background-color: red;\
+                        color: white;\
+                    }\
+                </style>\
+            </head>\
+            <body>\
+                <nav class='nav'>\
+                    <h1>GymClock Admin</h1>\
+                </nav>\
+                <div>\
+                    <h2>Error</h2>\
+                    <p>$ERROR_MESSAGE</p>\
+                    <a href='$BACK_LINK'>Back</a>\
+                </div>\
+            </body>\
+        </html>"));
+
+    body.replace(F("$ERROR_MESSAGE"), errorMessage);
+    body.replace(F("$BACK_LINK"), backLink);
+    adminServer.send(200, F("text/html"), body);
+}
+
 void serveAdminIndex() {
     Debug.println(F("serveAdminIndex"));
 
@@ -231,6 +265,22 @@ void serveAdminChangeWiFi() {
                             <label for='password'>Password</label>\
                             <input id='password' type='text' name='password' value='$CURRENT_PASSWORD' required minlength='1' maxlength='$MAX_PASSWORD_SIZE'>\
                         </div>\
+                        <div>\
+                            <label for='enableStaticIp'>Enable Static IP</label>\
+                            <input id='enableStaticIp' type='checkbox' name='enableStaticIp' $STATIC_IP_CHECKED>\
+                        </div>\
+                        <div>\
+                            <label for='staticIp'>Static IP</label>\
+                            <input id='staticIp' type='text' name='staticIp' value='$CURRENT_STATIC_IP'>\
+                        </div>\
+                        <div>\
+                            <label for='gatewayIp'>Default Gateway IP</label>\
+                            <input id='gatewayIp' type='text' name='gatewayIp' value='$CURRENT_GATEWAY_IP'>\
+                        </div>\
+                        <div>\
+                            <label for='subnetMask'>Subnet Mask</label>\
+                            <input id='subnetMask' type='text' name='subnetMask' value='$CURRENT_SUBNET_MASK'>\
+                        </div>\
                         <input type='submit' value='Change WiFi Settings'>\
                     </form>\
                 </div>\
@@ -242,74 +292,101 @@ void serveAdminChangeWiFi() {
     body.replace(F("$CURRENT_PASSWORD"), getWifiPassword());
     body.replace(F("$MAX_SSID_LENGTH"), formatIntoTemp(MAX_SSID_LENGTH));
     body.replace(F("$MAX_PASSWORD_LENGTH"), formatIntoTemp(MAX_PASSWORD_LENGTH));
+    body.replace(F("$STATIC_IP_CHECKED"), getEnableStaticIp() ? F("checked") : F(""));
+    if (getEnableStaticIp()) {
+        body.replace(F("$CURRENT_STATIC_IP"), formatIntoTemp(getStaticIp()));
+        body.replace(F("$CURRENT_GATEWAY_IP"), formatIntoTemp(getGatewayIp()));
+        body.replace(F("$CURRENT_SUBNET_MASK"), formatIntoTemp(getSubnetMask()));
+    } else {
+        // Default values.
+        body.replace(F("$CURRENT_STATIC_IP"), F("192.168.0.X"));
+        body.replace(F("$CURRENT_GATEWAY_IP"), F("192.168.0.1"));
+        body.replace(F("$CURRENT_SUBNET_MASK"), F("255.255.255.0"));
+    }
     adminServer.send(200, F("text/html"), body);
 }
 
 void serveAdminChangeWiFiSubmit() {
     Debug.println(F("serveAdminChangeWiFiSubmit"));
 
+    bool enableStaticIp = adminServer.hasArg(F("enableStaticIp"));
+    if (enableStaticIp) {
+        IPAddress staticIp;
+        IPAddress gatewayIp;
+        IPAddress subnetMask;
+        if (!hasArg(adminServer, F("staticIp")) || !staticIp.fromString(adminServer.arg(F("staticIp")))) {
+            Debug.println("Bad or missing staticIp form parameter");
+            serveErrorPage(F("Bad or missing static IP"), F("/changeWiFi"));
+            return;
+        }
+        if (!hasArg(adminServer, F("gatewayIp")) || !gatewayIp.fromString(adminServer.arg(F("gatewayIp")))) {
+            Debug.println("Bad or missing gatewayIp form parameter");
+            serveErrorPage(F("Bad or missing gatewayIp IP"), F("/changeWiFi"));
+            return;
+        }
+        if (!hasArg(adminServer, F("subnetMask")) || !subnetMask.fromString(adminServer.arg(F("subnetMask")))) {
+            Debug.println("Bad or missing subnetMask form parameter");
+            serveErrorPage(F("Bad or missing subnetMask IP"), F("/changeWiFi"));
+            return;
+        }
+        setEnableStaticIp(true);
+        setStaticIp(staticIp);
+        setGatewayIp(gatewayIp);
+        setSubnetMask(subnetMask);
+    } else {
+        setEnableStaticIp(false);
+        setStaticIp(IPAddress(0, 0, 0, 0));
+        setGatewayIp(IPAddress(0, 0, 0, 0));
+        setSubnetMask(IPAddress(0, 0, 0, 0));
+    }
+
+    String newSSID = adminServer.arg(F("ssid"));
+    if (!setWifiSsid(newSSID)) {
+        Debug.println("Bad ssid form parameter");
+        serveErrorPage(F("Bad network SSID"), F("/changeWiFi"));
+        return;
+    }
+
+    String newPassword = adminServer.arg(F("password"));
+    if (!setWifiPassword(newPassword)) {
+        Debug.println("Bad password form parameter");
+        serveErrorPage(F("Bad network password"), F("/changeWiFi"));
+        return;
+    }
+
+    // Set successfully. Immediately write-through to persistent storage.
+    storeSettings();
+
     WiFiClient client = adminServer.client();
     String body = "";
     body.reserve(2048);
-
-    String newSSID = adminServer.arg(F("ssid"));
-    String newPassword = adminServer.arg(F("password"));
-    if (!setWifiSsid(newSSID) || !setWifiPassword(newPassword)) {
-        // Unable to set.
-        body.concat(F("\
-            <html>\
-                <head>\
-                    <title>GymClock Admin</title>\
-                    <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
-                    <link rel='stylesheet' href='/stylesheet.css'>\
-                    <style>\
-                        .nav {\
-                            background-color: red;\
-                            color: white;\
-                        }\
-                    </style>\
-                </head>\
-                <body>\
-                    <nav class='nav'>\
-                        <h1>GymClock Admin</h1>\
-                    </nav>\
-                    <div>\
-                        <h2>Error - WiFi not changed!</h2>\
-                        <p>Unable to update the WiFi settings because of a validation error.</p>\
-                        <p>The max length of the SSID is $MAX_SSID_LENGTH. The max length of the password is $MAX_PASSWORD_LENGTH.</p>\
-                        <a href='/changeWiFi'>Back</a>\
-                    </div>\
-                </body>\
-            </html>"));
-    } else {
-        // Set successfully. Immediately write-through to persistent storage.
-        storeSettings();
-        body.concat(F("\
-            <html>\
-                <head>\
-                    <title>GymClock Admin</title>\
-                    <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
-                    <link rel='stylesheet' href='/stylesheet.css'>\
-                    <style>\
-                        .nav {\
-                            background-color: green;\
-                            color: white;\
-                        }\
-                    </style>\
-                </head>\
-                <body>\
-                    <nav class='nav'>\
-                        <h1>GymClock Admin</h1>\
-                    </nav>\
-                    <div>\
-                        <h2>Changed WiFi Settings</h2>\
-                        <p>SSID changed to <strong>$CURRENT_SSID</strong>.</p>\
-                        <p>Password changed to <strong>$CURRENT_PASSWORD</strong>.</p>\
-                        <a href='/'>Back to main menu</a>\
-                    </div>\
-                </body>\
-            </html>"));
-    }
+    body.concat(F("\
+        <html>\
+            <head>\
+                <title>GymClock Admin</title>\
+                <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+                <link rel='stylesheet' href='/stylesheet.css'>\
+                <style>\
+                    .nav {\
+                        background-color: green;\
+                        color: white;\
+                    }\
+                </style>\
+            </head>\
+            <body>\
+                <nav class='nav'>\
+                    <h1>GymClock Admin</h1>\
+                </nav>\
+                <div>\
+                    <h2>Changed WiFi Settings</h2>\
+                    <p>SSID changed to <strong>$CURRENT_SSID</strong>.</p>\
+                    <p>Password changed to <strong>$CURRENT_PASSWORD</strong>.</p>\
+                    <p>You will need to <a href='/reboot'>reboot the device</a> for the\
+                    changes to take effect.</p>\
+                    <a href='/'>Back to main menu</a>\
+                </div>\
+            </body>\
+        </html>"));
 
     body.replace(F("$CURRENT_SSID"), newSSID);
     body.replace(F("$CURRENT_PASSWORD"), newPassword);

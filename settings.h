@@ -1,7 +1,7 @@
 #ifndef GYMCLOCK_SETTINGS_H
 #define GYMCLOCK_SETTINGS_H
 
-#include <Arduino.h>
+#include <IPAddress.h>
 
 // Initializes the storage library, and loads settings from persistent storage into memory.
 // This should be called before any other settings functions are called, and should be
@@ -24,5 +24,17 @@ bool setWifiSsid(String &ssid);
 
 char const * getWifiPassword();
 bool setWifiPassword(String &password);
+
+bool getEnableStaticIp();
+void setEnableStaticIp(bool enableStaticIp);
+
+IPAddress getStaticIp();
+void setStaticIp(const IPAddress &staticIp);
+
+IPAddress getGatewayIp();
+void setGatewayIp(const IPAddress &gatewayIp);
+
+IPAddress getSubnetMask();
+void setSubnetMask(const IPAddress &subnetMask);
 
 #endif

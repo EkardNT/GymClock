@@ -79,6 +79,14 @@ void setup() {
 
   if (strlen(wifiSsid) > 0 && strlen(wifiPassword) > 0) {
     Debug.printf("Trying to log on to WiFi network %s in station mode\n", wifiSsid);
+    if (getEnableStaticIp()) {
+      IPAddress staticIp = getStaticIp();
+      IPAddress gatewayIp = getGatewayIp();
+      IPAddress subnetMask = getSubnetMask();
+      Debug.print("Configuring static IP Address ");
+      Debug.println(staticIp);
+      WiFi.config(staticIp, gatewayIp, subnetMask);
+    }
     WiFi.begin(wifiSsid, wifiPassword);
   } else {
     Debug.println("Not logging onto network because WiFi SSID and/or password from settings is empty");

@@ -4,6 +4,7 @@
 #include "debug.h"
 #include "programs.h"
 #include "sound.h"
+#include "settings.h"
 
 DebugPrint Debug;
 
@@ -116,4 +117,5 @@ void DebugPrint::dump() {
     printlnStatus(&scoredCountdownProgram);
     Debug.print(F("Scound: "));
     printlnStatus(&soundRoutine);
+    dumpSettings();
 }
