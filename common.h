@@ -121,4 +121,6 @@ char * formatIntoTemp(long val);
 
 char * formatFloatIntoTemp(float val);
 
+void beginWifi();
+
 #endif

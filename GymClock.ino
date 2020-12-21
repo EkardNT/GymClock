@@ -74,23 +74,7 @@ void setup() {
   WiFi.setAutoConnect(false);
   WiFi.setAutoReconnect(true);
 
-  char const * wifiSsid = getWifiSsid();
-  char const * wifiPassword = getWifiPassword();
-
-  if (strlen(wifiSsid) > 0 && strlen(wifiPassword) > 0) {
-    Debug.printf("Trying to log on to WiFi network %s in station mode\n", wifiSsid);
-    if (getEnableStaticIp()) {
-      IPAddress staticIp = getStaticIp();
-      IPAddress gatewayIp = getGatewayIp();
-      IPAddress subnetMask = getSubnetMask();
-      Debug.print("Configuring static IP Address ");
-      Debug.println(staticIp);
-      WiFi.config(staticIp, gatewayIp, subnetMask);
-    }
-    WiFi.begin(wifiSsid, wifiPassword);
-  } else {
-    Debug.println("Not logging onto network because WiFi SSID and/or password from settings is empty");
-  }
+  beginWifi();
 
   dnsServer.start(53, F("gymclock.local"), AP_LOCAL_IP);
 
@@ -173,4 +157,25 @@ void networkStop(const WiFiEventStationModeDisconnected& event) {
   webUpdateServer.stop();
   timeClient.end();
   networkActive = false;
+}
+
+// Called both from the setup() method as well as from the Admin UI /changeWiFi handler.
+void beginWifi() {
+  char const * wifiSsid = getWifiSsid();
+  char const * wifiPassword = getWifiPassword();
+
+  if (strlen(wifiSsid) > 0 && strlen(wifiPassword) > 0) {
+    Debug.printf("Trying to log on to WiFi network %s in station mode\n", wifiSsid);
+    if (getEnableStaticIp()) {
+      IPAddress staticIp = getStaticIp();
+      IPAddress gatewayIp = getGatewayIp();
+      IPAddress subnetMask = getSubnetMask();
+      Debug.print("Configuring static IP Address ");
+      Debug.println(staticIp);
+      WiFi.config(staticIp, gatewayIp, subnetMask);
+    }
+    WiFi.begin(wifiSsid, wifiPassword);
+  } else {
+    Debug.println("Not logging onto network because WiFi SSID and/or password from settings is empty");
+  }
 }

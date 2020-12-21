@@ -357,6 +357,11 @@ void serveAdminChangeWiFiSubmit() {
     // Set successfully. Immediately write-through to persistent storage.
     storeSettings();
 
+    // Reset WiFi state.
+    Debug.println("Disconnecting WiFi due to changed settings");
+    WiFi.disconnect();
+    beginWifi();
+
     WiFiClient client = adminServer.client();
     String body = "";
     body.reserve(2048);
@@ -381,8 +386,6 @@ void serveAdminChangeWiFiSubmit() {
                     <h2>Changed WiFi Settings</h2>\
                     <p>SSID changed to <strong>$CURRENT_SSID</strong>.</p>\
                     <p>Password changed to <strong>$CURRENT_PASSWORD</strong>.</p>\
-                    <p>You will need to <a href='/reboot'>reboot the device</a> for the\
-                    changes to take effect.</p>\
                     <a href='/'>Back to main menu</a>\
                 </div>\
             </body>\
