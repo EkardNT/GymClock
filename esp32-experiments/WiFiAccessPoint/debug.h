@@ -11,7 +11,7 @@ class DebugPrint : public Print {
         size_t write(const uint8_t *buffer, size_t size);
         int availableForWrite();
         void flush();
-        void enableUdp(IPAddress debugIp, uint16_t debugPort);
+        void enableUdp(IPAddress &debugIp, uint16_t debugPort);
         void disableUdp();
         bool isUdpEnabled();
 

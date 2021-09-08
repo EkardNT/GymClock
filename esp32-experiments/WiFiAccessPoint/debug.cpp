@@ -63,7 +63,7 @@ void DebugPrint::flush() {
     Serial.flush();
 }
 
-void DebugPrint::enableUdp(IPAddress debugIp, uint16_t debugPort) {
+void DebugPrint::enableUdp(IPAddress &debugIp, uint16_t debugPort) {
     this->udpEnabled = true;
     this->debugIp = debugIp;
     this->debugPort = debugPort;

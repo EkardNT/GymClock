@@ -17,6 +17,9 @@ char * formatFloatIntoTemp(float val);
 void handleIndex();
 void handleRebootConfirm();
 void handleRebootSubmit();
+void handleEnableUdpDebugConfirm();
+void handleEnableUdpDebugSubmit();
+void handleDisableUdpDebug();
 void handleNotFound();
 
 void startAdminServer(const IPAddress & accessPointIp) {
@@ -26,6 +29,9 @@ void startAdminServer(const IPAddress & accessPointIp) {
     webServer.on("/", handleIndex);
     webServer.on("/reboot", HTTP_GET, handleRebootConfirm);
     webServer.on("/reboot", HTTP_POST, handleRebootSubmit);
+    webServer.on("/enableUdpDebug", HTTP_GET, handleEnableUdpDebugConfirm);
+    webServer.on("/enableUdpDebug", HTTP_POST, handleEnableUdpDebugSubmit);
+    webServer.on("/disableUdpDebug", HTTP_POST, handleDisableUdpDebug);
     webServer.onNotFound(handleNotFound);
 
     webServer.begin();
@@ -74,7 +80,7 @@ void handleIndex() {
                     <form $ENABLE_UDP_DEBUG action='/enableUdpDebug' method='get'>\
                         <button type='submit'>Enable UDP Debug</button>\
                     </form>\
-                    <form $DISABLE_UDP_DEBUG action='/disableUdpDebug' method='get'>\
+                    <form $DISABLE_UDP_DEBUG action='/disableUdpDebug' method='post'>\
                         <button type='submit'>Disable UDP Debug</button>\
                     </form>\
                     <h2>Access Point</h2>\
@@ -167,7 +173,6 @@ void handleIndex() {
 
 void handleRebootConfirm() {
     Debug.println("handleRebootConfirm");
-    WiFiClient client = webServer.client();
 
     response.remove(0);
     response.concat(F("\
@@ -201,7 +206,6 @@ void handleRebootConfirm() {
 
 void handleRebootSubmit() {
     Debug.println("handleRebootSubmit");
-    WiFiClient client = webServer.client();
 
     response.remove(0);
     response.concat(F("\
@@ -229,6 +233,114 @@ void handleRebootSubmit() {
 
     Debug.println("Restarting ESP in response to admin request");
     ESP.restart();
+}
+
+void handleEnableUdpDebugConfirm() {
+    Debug.println("handleEnableUdpDebugConfirm");
+
+    response.remove(0);
+    response.concat(F("\
+        <html>\
+            <head>\
+                <title>GymClock Admin</title>\
+                <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+                <link rel='stylesheet' href='/stylesheet.css'>\
+                <style>\
+                    .nav {\
+                        background-color: black;\
+                        color: white;\
+                    }\
+                </style>\
+            </head>\
+            <body>\
+                <nav class='nav'>\
+                    <h1>Enable UDP Debug</h1>\
+                </nav>\
+                <form action='/enableUdpDebug' method='post'>\
+                    <p>Enter destination for UDP debug data.</p>\
+                    <div><label>IP <input type='text' name='ip'></label></div>\
+                    <div><label>Port <input type='text' name='port'></label></div>\
+                    <button type='submit'>Enable UDP Debugging</button>\
+                </form>\
+            </body>\
+        </html>"));
+    webServer.send(200, "text/html", response);
+}
+
+void handleEnableUdpDebugSubmit() {
+    Debug.println("handleEnableUdpDebugSubmit");
+
+    IPAddress debugAddress;
+    if (!debugAddress.fromString(webServer.arg("ip"))) {
+        Debug.println("Bad IP address argument, displaying confirm screen again");
+        handleEnableUdpDebugConfirm();
+        return;
+    }
+    uint16_t debugPort = webServer.arg("port").toInt();
+    if (debugPort == 0) {
+        Debug.println("Bad port argument, displaying confirm screen again");
+        handleEnableUdpDebugConfirm();
+        return;
+    }
+    Debug.enableUdp(debugAddress, debugPort);
+    Debug.printf("Enabled UDP debug to IP %s:%d\n", debugAddress, debugPort);
+    
+    response.remove(0);
+    response.concat(F("\
+        <html>\
+            <head>\
+                <title>GymClock Admin</title>\
+                <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+                <meta http-equiv='refresh' content='3;url=/'>\
+                <link rel='stylesheet' href='/stylesheet.css'>\
+                <style>\
+                    .nav {\
+                        background-color: green;\
+                        color: white;\
+                    }\
+                </style>\
+            </head>\
+            <body>\
+                <nav class='nav'>\
+                    <h1>UDP Debug Enabled</h1>\
+                </nav>\
+                <p>UDP debugging enabled to $DEBUG_ADDRESS:$DEBUG_PORT. Redirecting to index page in 3 seconds.</p>\
+            </body>\
+        </html>"));
+    response.replace(F("$DEBUG_ADDRESS"), formatIntoTemp(debugAddress));
+    response.replace(F("$DEBUG_PORT"), formatIntoTemp(debugPort));
+    webServer.send(200, "text/html", response);
+}
+
+void handleDisableUdpDebug() {
+    Debug.println("handleDisableUdpDebug");
+
+    Debug.disableUdp();
+    Debug.println("Disabled UDP debug");
+    
+    response.remove(0);
+    response.concat(F("\
+        <html>\
+            <head>\
+                <title>GymClock Admin</title>\
+                <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+                <meta http-equiv='refresh' content='3;url=/'>\
+                <link rel='stylesheet' href='/stylesheet.css'>\
+                <style>\
+                    .nav {\
+                        background-color: green;\
+                        color: white;\
+                    }\
+                </style>\
+            </head>\
+            <body>\
+                <nav class='nav'>\
+                    <h1>UDP Debug Disabled</h1>\
+                </nav>\
+                <p>UDP debugging disabled. Redirecting to index page in 3 seconds.</p>\
+            </body>\
+        </html>"));
+    webServer.send(200, "text/html", response);
 }
 
 void handleNotFound() {
