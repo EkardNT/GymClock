@@ -15,6 +15,8 @@ char * formatIntoTemp(long val);
 char * formatFloatIntoTemp(float val);
 
 void handleIndex();
+void handleRebootConfirm();
+void handleRebootSubmit();
 void handleNotFound();
 
 void startAdminServer(const IPAddress & accessPointIp) {
@@ -22,6 +24,8 @@ void startAdminServer(const IPAddress & accessPointIp) {
     Debug.println("DNS server started");
 
     webServer.on("/", handleIndex);
+    webServer.on("/reboot", HTTP_GET, handleRebootConfirm);
+    webServer.on("/reboot", HTTP_POST, handleRebootSubmit);
     webServer.onNotFound(handleNotFound);
 
     webServer.begin();
@@ -159,6 +163,72 @@ void handleIndex() {
         response.replace(F("$DISABLE_UDP_DEBUG"), F("style='display:none;'"));
     }
     webServer.send(200, "text/html", response);
+}
+
+void handleRebootConfirm() {
+    Debug.println("handleRebootConfirm");
+    WiFiClient client = webServer.client();
+
+    response.remove(0);
+    response.concat(F("\
+        <html>\
+            <head>\
+                <title>GymClock Admin</title>\
+                <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+                <link rel='stylesheet' href='/stylesheet.css'>\
+                <style>\
+                    .nav {\
+                        background-color: red;\
+                        color: white;\
+                    }\
+                </style>\
+            </head>\
+            <body>\
+                <nav class='nav'>\
+                    <h1>Reboot Device</h1>\
+                </nav>\
+                <p>Are you sure you want to reboot?</p>\
+                <form style='display:inline;' action='/reboot' method='post'>\
+                    <button type='submit'>Yes</button>\
+                </form>\
+                <form style='display:inline;' action='/' method='get'>\
+                    <button type='submit'>No</button>\
+                </form>\
+            </body>\
+        </html>"));
+    webServer.send(200, "text/html", response);
+}
+
+void handleRebootSubmit() {
+    Debug.println("handleRebootSubmit");
+    WiFiClient client = webServer.client();
+
+    response.remove(0);
+    response.concat(F("\
+        <html>\
+            <head>\
+                <title>GymClock Admin</title>\
+                <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0'>\
+                <meta http-equiv='refresh' content='10;url=/'>\
+                <link rel='stylesheet' href='/stylesheet.css'>\
+                <style>\
+                    .nav {\
+                        background-color: green;\
+                        color: white;\
+                    }\
+                </style>\
+            </head>\
+            <body>\
+                <nav class='nav'>\
+                    <h1>Device Rebooting!</h1>\
+                </nav>\
+                <p>Device is rebooting <strong>now</strong>. Redirecting to index page in 10 seconds.</p>\
+            </body>\
+        </html>"));
+    webServer.send(200, "text/html", response);
+
+    Debug.println("Restarting ESP in response to admin request");
+    ESP.restart();
 }
 
 void handleNotFound() {
