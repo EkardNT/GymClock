@@ -2,18 +2,27 @@
 #include <DNSServer.h>
 #include "debug.h"
 
+// This serves the admin website.
 WebServer webServer(80);
+// This vends the "gymclock.local" domain name so we can navigate to the admin website
+// by name instead of by IP address (once connected to the admin WiFi).
 DNSServer dnsServer;
 
+// Buffer for response body to reduce allocations.
 String response("");
 
+// Scratch buffer for temporary formatting.
 const int FORMAT_BUF_SIZE = 256;
 char tempFormatBuffer[FORMAT_BUF_SIZE] = {0};
 
+// Formatting helpers which write into the tempFormatBuffer and return a pointer to it.
+// Pointer is only valid until the next call to one of these formatting helpers, so never
+// store it anywhere!
 char * formatIntoTemp(IPAddress val);
 char * formatIntoTemp(long val);
 char * formatFloatIntoTemp(float val);
 
+// Route handlers.
 void handleIndex();
 void handleRebootConfirm();
 void handleRebootSubmit();

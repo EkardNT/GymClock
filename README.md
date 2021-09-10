@@ -60,8 +60,8 @@ display can light all 10 digits simultaneously. However, when all 7 segments are
 lit, a digit consumes a full 1 amp. This means having all 10 digits lit would take 10 amps,
 which is way more current than I felt safe using. So instead, the display works by the
 central controller iterating over each digit, turning it on, turning it off, and moving to
-the next digit, in a continuous loop. The loop would be so fast that our eye's persistence
-of vision would mean that we see the entire display as being lit, even if only one digit
+the next digit, in a continuous loop. The loop is so fast that our eye's persistence
+of vision means that we see the entire display as being lit, even if only one digit
 is lit at a time.
 
 The above description is not fully accurate. There is a concept of a "lit window",
