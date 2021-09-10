@@ -1,6 +1,7 @@
 #include <WebServer.h>
 #include <DNSServer.h>
 #include "debug.h"
+#include "network.h"
 
 // This serves the admin website.
 WebServer webServer(80);
@@ -110,6 +111,10 @@ void handleIndex() {
                         <li>Remote IP: $REQ_REMOTE_IP</li>\
                         <li>Remote Port: $REQ_REMOTE_PORT</li>\
                     </ul>\
+                    <h2>Time</h2>\
+                    <ul>\
+                        <li>Current Time: $FORMATTED_TIME</li>\
+                    </ul>\
                     <h2>Memory</h2>\
                     <ul>\
                         <li>Free Heap: $FREE_HEAP</li>\
@@ -170,6 +175,7 @@ void handleIndex() {
     response.replace(F("$FLASH_SIZE"), formatIntoTemp(ESP.getFlashChipSize()));
     response.replace(F("$FLASH_SPEED"), formatIntoTemp(ESP.getFlashChipSpeed()));
     response.replace(F("$UPTIME"), formatIntoTemp(millis()));
+    response.replace(F("$FORMATTED_TIME"), getFormattedTime());
     if (Debug.isUdpEnabled()) {
         response.replace(F("$ENABLE_UDP_DEBUG"), F("style='display:none;'"));
         response.replace(F("$DISABLE_UDP_DEBUG"), F("style='display:inline;'"));

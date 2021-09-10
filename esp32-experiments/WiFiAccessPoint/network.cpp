@@ -1,6 +1,8 @@
 #include <Arduino.h>
 #include <WiFi.h>
+#include <WiFiUdp.h>
 #include <string.h>
+#include <NTPClient.h>
 #include "admin.h"
 #include "debug.h"
 #include "network.h"
@@ -19,6 +21,9 @@ const char HOSTNAME[] = "gymclock";
 
 bool accessPointStarted = false;
 bool stationConnected = false;
+
+WiFiUDP ntpUdp;
+NTPClient ntpClient(ntpUdp, "us.pool.ntp.org", 0, 3600000);
 
 void clearStationCredentials();
 void handleWiFiEvent(WiFiEvent_t event);
@@ -50,6 +55,9 @@ void initializeNetwork() {
 void updateNetwork() {
     if (accessPointStarted) {
         updateAdminServer();
+    }
+    if (stationConnected) {
+        ntpClient.update();
     }
 }
 
@@ -157,10 +165,22 @@ void onAccessPointStopped() {
 
 void onStationConnectedWithIp() {
     Debug.println("WiFi STA now connected with IP address");
+    
+    Debug.println("Starting NTP client");
+    ntpClient.begin();
+
     stationConnected = true;
 }
 
 void onStationLostIp() {
     Debug.println("WiFi STA disconnected, no IP address :(");
+
+    Debug.println("Shutting down NTP client");
+    ntpClient.end();
+
     stationConnected = false;
+}
+
+String getFormattedTime() {
+    return ntpClient.getFormattedTime();
 }
