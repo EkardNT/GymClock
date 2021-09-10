@@ -2,6 +2,7 @@
 #include <DNSServer.h>
 #include "debug.h"
 #include "network.h"
+#include "ntp.h"
 
 // This serves the admin website.
 WebServer webServer(80);
@@ -113,7 +114,8 @@ void handleIndex() {
                     </ul>\
                     <h2>Time</h2>\
                     <ul>\
-                        <li>Current Time: $FORMATTED_TIME</li>\
+                        <li>Current Epoch Time: $EPOCH_TIME</li>\
+                        <li>Uptime (ms): $UPTIME</li>\
                     </ul>\
                     <h2>Memory</h2>\
                     <ul>\
@@ -138,7 +140,6 @@ void handleIndex() {
                         <li>Free Sketch Space: $FREE_SKETCH_SPACE</li>\
                         <li>Flash Chip Size: $FLASH_SIZE</li>\
                         <li>Flash Chip Speed (Hz): $FLASH_SPEED</li>\
-                        <li>Uptime (ms): $UPTIME</li>\
                     </ul>\
                 </div>\
             </body>\
@@ -175,7 +176,7 @@ void handleIndex() {
     response.replace(F("$FLASH_SIZE"), formatIntoTemp(ESP.getFlashChipSize()));
     response.replace(F("$FLASH_SPEED"), formatIntoTemp(ESP.getFlashChipSpeed()));
     response.replace(F("$UPTIME"), formatIntoTemp(millis()));
-    response.replace(F("$FORMATTED_TIME"), getFormattedTime());
+    response.replace(F("$EPOCH_TIME"), formatIntoTemp(getEpochTime()));
     if (Debug.isUdpEnabled()) {
         response.replace(F("$ENABLE_UDP_DEBUG"), F("style='display:none;'"));
         response.replace(F("$DISABLE_UDP_DEBUG"), F("style='display:inline;'"));

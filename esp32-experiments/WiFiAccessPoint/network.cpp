@@ -1,11 +1,10 @@
 #include <Arduino.h>
 #include <WiFi.h>
-#include <WiFiUdp.h>
 #include <string.h>
-#include <NTPClient.h>
 #include "admin.h"
 #include "debug.h"
 #include "network.h"
+#include "ntp.h"
 
 const char AP_SSID[] = "GymClock";
 // Change this to an actual password before flashing the sign!
@@ -22,9 +21,6 @@ const char HOSTNAME[] = "gymclock";
 bool accessPointStarted = false;
 bool stationConnected = false;
 
-WiFiUDP ntpUdp;
-NTPClient ntpClient(ntpUdp, "us.pool.ntp.org", 0, 3600000);
-
 void clearStationCredentials();
 void handleWiFiEvent(WiFiEvent_t event);
 void onAccessPointStarted();
@@ -39,7 +35,7 @@ void initializeNetwork() {
     WiFi.onEvent(handleWiFiEvent);
     Debug.println("Disabling WiFi persistent settings mode");
     WiFi.persistent(false);
-    Debug.println("Setting WiFi mode to WIFI_AP");
+    Debug.println("Setting WiFi mode to WIFI_AP_STA");
     WiFi.mode(WIFI_AP_STA);
     Debug.printf("Setting WiFi hostname to %s\n", HOSTNAME);
     WiFi.setHostname(HOSTNAME);
@@ -57,7 +53,7 @@ void updateNetwork() {
         updateAdminServer();
     }
     if (stationConnected) {
-        ntpClient.update();
+        updateNtp();
     }
 }
 
@@ -165,22 +161,13 @@ void onAccessPointStopped() {
 
 void onStationConnectedWithIp() {
     Debug.println("WiFi STA now connected with IP address");
-    
-    Debug.println("Starting NTP client");
-    ntpClient.begin();
-
+    initializeNtp();
     stationConnected = true;
 }
 
 void onStationLostIp() {
     Debug.println("WiFi STA disconnected, no IP address :(");
-
-    Debug.println("Shutting down NTP client");
-    ntpClient.end();
-
+    shutdownNtp();
     stationConnected = false;
 }
 
-String getFormattedTime() {
-    return ntpClient.getFormattedTime();
-}

@@ -6,6 +6,5 @@
 void initializeNetwork();
 void setStationCredentials(const char * ssid, const char * password);
 void updateNetwork();
-String getFormattedTime();
 
 #endif
