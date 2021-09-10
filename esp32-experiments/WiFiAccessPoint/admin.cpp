@@ -1,3 +1,4 @@
+#include <AceTime.h>
 #include <WebServer.h>
 #include <DNSServer.h>
 #include "debug.h"
@@ -22,7 +23,9 @@ char tempFormatBuffer[FORMAT_BUF_SIZE] = {0};
 // store it anywhere!
 char * formatIntoTemp(IPAddress val);
 char * formatIntoTemp(long val);
+char * formatIntoTemp(long val, const char * formatSpecifier);
 char * formatFloatIntoTemp(float val);
+char * formatBoolIntoTemp(bool value);
 
 // Route handlers.
 void handleIndex();
@@ -114,7 +117,9 @@ void handleIndex() {
                     </ul>\
                     <h2>Time</h2>\
                     <ul>\
-                        <li>Current Epoch Time: $EPOCH_TIME</li>\
+                        <li>Local Time: $LOCAL_YEAR/$LOCAL_MONTH/$LOCAL_DAY $LOCAL_HOUR:$LOCAL_MINUTE:$LOCAL_SECOND</li>\
+                        <li>Epoch Seconds: $EPOCH_SECONDS</li>\
+                        <li>Is NTP Time Set: $IS_NTP_TIME_SET</li>\
                         <li>Uptime (ms): $UPTIME</li>\
                     </ul>\
                     <h2>Memory</h2>\
@@ -176,7 +181,17 @@ void handleIndex() {
     response.replace(F("$FLASH_SIZE"), formatIntoTemp(ESP.getFlashChipSize()));
     response.replace(F("$FLASH_SPEED"), formatIntoTemp(ESP.getFlashChipSpeed()));
     response.replace(F("$UPTIME"), formatIntoTemp(millis()));
-    response.replace(F("$EPOCH_TIME"), formatIntoTemp(getEpochTime()));
+
+    ace_time::ZonedDateTime localTime = getLocalTime();
+    response.replace(F("$EPOCH_SECONDS"), formatIntoTemp(localTime.toEpochSeconds()));
+    response.replace(F("$LOCAL_YEAR"), formatIntoTemp(localTime.year(), "%04d"));
+    response.replace(F("$LOCAL_MONTH"), formatIntoTemp(localTime.month(), "%02d"));
+    response.replace(F("$LOCAL_DAY"), formatIntoTemp(localTime.day(), "%02d"));
+    response.replace(F("$LOCAL_HOUR"), formatIntoTemp(localTime.hour(), "%02d"));
+    response.replace(F("$LOCAL_MINUTE"), formatIntoTemp(localTime.minute(), "%02d"));
+    response.replace(F("$LOCAL_SECOND"), formatIntoTemp(localTime.second(), "%02d"));
+    response.replace(F("$IS_NTP_TIME_SET"), formatBoolIntoTemp(isNtpTimeSet()));
+
     if (Debug.isUdpEnabled()) {
         response.replace(F("$ENABLE_UDP_DEBUG"), F("style='display:none;'"));
         response.replace(F("$DISABLE_UDP_DEBUG"), F("style='display:inline;'"));
@@ -367,16 +382,31 @@ void handleNotFound() {
 }
 
 char * formatIntoTemp(IPAddress val) {
-  snprintf(tempFormatBuffer, FORMAT_BUF_SIZE, "%d.%d.%d.%d", val[0], val[1], val[2], val[3]);
-  return tempFormatBuffer;
+    
+    snprintf(tempFormatBuffer, FORMAT_BUF_SIZE, "%d.%d.%d.%d", val[0], val[1], val[2], val[3]);
+    return tempFormatBuffer;
 }
 
 char * formatIntoTemp(long val) {
-  snprintf(tempFormatBuffer, FORMAT_BUF_SIZE, "%d", val);
-  return tempFormatBuffer;
+    snprintf(tempFormatBuffer, FORMAT_BUF_SIZE, "%d", val);
+    return tempFormatBuffer;
+}
+
+char * formatIntoTemp(long val, const char * formatSpecifier) {
+    snprintf(tempFormatBuffer, FORMAT_BUF_SIZE, formatSpecifier, val);
+    return tempFormatBuffer;
 }
 
 char * formatFloatIntoTemp(float val) {
-  snprintf(tempFormatBuffer, FORMAT_BUF_SIZE, "%.2f", val);
-  return tempFormatBuffer;
+    snprintf(tempFormatBuffer, FORMAT_BUF_SIZE, "%.2f", val);
+    return tempFormatBuffer;
+}
+
+char * formatBoolIntoTemp(bool val) {
+    if (val) {
+        snprintf(tempFormatBuffer, FORMAT_BUF_SIZE, "%s", "true");
+    } else {
+        snprintf(tempFormatBuffer, FORMAT_BUF_SIZE, "%s", "false");
+    }
+    return tempFormatBuffer;
 }
