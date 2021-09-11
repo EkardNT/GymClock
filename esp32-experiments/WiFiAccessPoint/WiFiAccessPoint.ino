@@ -1,20 +1,15 @@
-#include <WiFi.h>
-#include <WiFiClient.h>
-#include <WiFiAP.h>
-
 #include "admin.h"
 #include "debug.h"
 #include "display.h"
 #include "network.h"
+#include "programs.h"
 
 const char STA_SSID[] = "Boulevard504-2GHz";
 const char STA_PASSWORD[] = "foobar";
 
 void setup() {
-    pinMode(LED_BUILTIN, OUTPUT);
-
     Serial.begin(115200);
-    Debug.println();
+    Debug.println("Starting setup");
 
     Debug.print("Setup running on core ");
     Debug.println(xPortGetCoreID());
@@ -27,9 +22,16 @@ void setup() {
     initializeNetwork();
     Debug.println("Initialized network");
 
+    Debug.println("Setting station credentials");
     setStationCredentials(STA_SSID, STA_PASSWORD);
+    
+    Debug.println("Initializing programs");
+    initializePrograms();
+    
+    Debug.println("Setup complete, entering loop");
 }
 
 void loop() {
     updateNetwork();
+    updatePrograms();
 }

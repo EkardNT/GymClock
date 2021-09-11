@@ -97,7 +97,7 @@ void handleIndex() {
                     <form $DISABLE_UDP_DEBUG action='/disableUdpDebug' method='post'>\
                         <button type='submit'>Disable UDP Debug</button>\
                     </form>\
-                    <h2>Access Point</h2>\
+                    <h2>WiFi Access Point</h2>\
                     <ul>\
                         <li>SSID: $AP_SSID</li>\
                         <li>IP: $AP_IP</li>\
@@ -107,6 +107,19 @@ void handleIndex() {
                         <li>Hostname: $AP_HOSTNAME</li>\
                         <li>MAC: $AP_MAC</li>\
                         <li>Stations: $AP_NUM_STATIONS</li>\
+                    </ul>\
+                    <h2>WiFi Station</h2>\
+                    <ul>\
+                        <li>Connected: $STA_CONNECTED</li>\
+                        <li>SSID: $STA_SSID</li>\
+                        <li>BSSID: $STA_BSSID</li>\
+                        <li>Local IP: $STA_LOCAL_IP</li>\
+                        <li>MAC Address: $STA_MAC_ADDRESS</li>\
+                        <li>Subnet Mask: $STA_SUBNET_MASK</li>\
+                        <li>Gateway IP: $STA_GATEWAY_IP</li>\
+                        <li>RSSI: $STA_RSSI</li>\
+                        <li>Auto Connect: $STA_AUTO_CONNECT</li>\
+                        <li>Auto Reconnect: $STA_AUTO_RECONNECT</li>\
                     </ul>\
                     <h2>Request</h2>\
                     <ul>\
@@ -180,6 +193,16 @@ void handleIndex() {
     response.replace(F("$FREE_SKETCH_SPACE"), formatIntoTemp(ESP.getFreeSketchSpace()));
     response.replace(F("$FLASH_SIZE"), formatIntoTemp(ESP.getFlashChipSize()));
     response.replace(F("$FLASH_SPEED"), formatIntoTemp(ESP.getFlashChipSpeed()));
+    response.replace(F("$STA_CONNECTED"), formatBoolIntoTemp(isStationConnected()));
+    response.replace(F("$STA_SSID"), stationSSID());
+    response.replace(F("$STA_BSSID"), stationBSSID());
+    response.replace(F("$STA_LOCAL_IP"), formatIntoTemp(stationLocalIp()));
+    response.replace(F("$STA_MAC_ADDRESS"), stationMacAddress());
+    response.replace(F("$STA_SUBNET_MASK"), formatIntoTemp(stationSubnetMask()));
+    response.replace(F("$STA_GATEWAY_IP"), formatIntoTemp(stationGatewayIP()));
+    response.replace(F("$STA_RSSI"), formatIntoTemp(stationRSSI()));
+    response.replace(F("$STA_AUTO_CONNECT"), formatBoolIntoTemp(isStationAutoConnect()));
+    response.replace(F("$STA_AUTO_RECONNECT"), formatBoolIntoTemp(isStationAutoReconnect()));
     response.replace(F("$UPTIME"), formatIntoTemp(millis()));
 
     ace_time::ZonedDateTime localTime = getLocalTime();

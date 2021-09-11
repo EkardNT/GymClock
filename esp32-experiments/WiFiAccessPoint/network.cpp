@@ -170,3 +170,43 @@ void onStationLostIp() {
     shutdownNtp();
     stationConnected = false;
 }
+
+bool isStationConnected() {
+    return WiFi.isConnected();
+}
+
+bool isStationAutoConnect() {
+    return WiFi.getAutoConnect();
+}
+
+bool isStationAutoReconnect() {
+    return WiFi.getAutoReconnect();
+}
+
+IPAddress stationLocalIp() {
+    return WiFi.localIP();
+}
+
+String stationMacAddress() {
+    return WiFi.macAddress();
+}
+
+IPAddress stationSubnetMask() {
+    return WiFi.subnetMask();
+}
+
+IPAddress stationGatewayIP() {
+    return WiFi.gatewayIP();
+}
+
+String stationSSID() {
+    return WiFi.SSID();
+}
+
+String stationBSSID() {
+    return WiFi.BSSIDstr();
+}
+
+int8_t stationRSSI() {
+    return WiFi.RSSI();
+}
