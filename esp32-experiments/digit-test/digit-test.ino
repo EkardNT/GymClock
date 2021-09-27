@@ -1,12 +1,5 @@
 #include <Arduino.h>
 #include <stdint.h>
-#include <esp_task_wdt.h>
-#include <soc/rtc_wdt.h>
-#include <freertos/task.h>
-#include <esp_int_wdt.h>
-#include <esp_task_wdt.h>
-
-#include "display.h"
 
 // SER
 const int srDataPin = 32;
@@ -78,6 +71,8 @@ TaskHandle_t renderTaskHandle;
 StaticSemaphore_t displayStateMutex;
 SemaphoreHandle_t displayStateMutexHandle;
 
+void renderToDigit(uint8_t digitState);
+
 // Helper function used by the main renderDisplay function. Selects a certain
 // digit by setting the address lines appropriately.
 void selectDigitForRender(int digit) {
@@ -88,12 +83,6 @@ void selectDigitForRender(int digit) {
             digitalWrite(addrBitMap[i], LOW);
         }
     }
-}
-
-void renderToDigit(byte digitState) {
-    digitalWrite(srStorageClockPin, LOW);
-    shiftOut(srDataPin, srShiftClockPin, MSBFIRST, digitState);
-    digitalWrite(srStorageClockPin, HIGH);
 }
 
 void renderDisplay() {
@@ -116,15 +105,12 @@ void renderDisplay() {
 }
 
 void renderLoop(void * unused) {
-    esp_task_wdt_delete(nullptr);
     while (true) {
         renderDisplay();
         // Need a delay to allow the framework's watchdog task to run,
         // otherwise the program will abort() (aka reboot) with an error
         // saying "Task watchdog got triggered. The following tasks did not reset the watchdog in time".
-        taskYIELD();
-        // rtc_wdt_feed();
-        // esp_task_wdt_reset();
+        delay(1);
     }
 }
 
@@ -139,26 +125,33 @@ void initializeDisplay() {
     pinMode(addrBitMap[2], OUTPUT);
     pinMode(addrBitMap[3], OUTPUT);
 
-    digitalWrite(srDataPin, LOW);
-    digitalWrite(srStorageClockPin, LOW);
-    digitalWrite(srShiftClockPin, LOW);
-    digitalWrite(addrBitMap[0], LOW);
-    digitalWrite(addrBitMap[1], LOW);
-    digitalWrite(addrBitMap[2], LOW);
-    digitalWrite(addrBitMap[3], LOW);
+    digitalWrite(srDataPin, HIGH);
+    digitalWrite(srStorageClockPin, HIGH);
+    digitalWrite(srShiftClockPin, HIGH);
+    digitalWrite(addrBitMap[0], HIGH);
+    digitalWrite(addrBitMap[1], HIGH);
+    digitalWrite(addrBitMap[2], HIGH);
+    digitalWrite(addrBitMap[3], HIGH);
 
-    for (int i = 0; i < NUM_DIGITS; i++) {
-        updateDigit(i, '0' + i);
-    }
+//    for (int i = 0; i < NUM_DIGITS; i++) {
+//        updateDigit(0, '0');
+//        // selectDigitForRender(i);
+//        // sleep(2000);
+//    }
 
-    xTaskCreatePinnedToCore(
-        renderLoop, /* Function to implement the task */
-        "renderLoop", /* Name of the task */
-        10000,  /* Stack size in words */
-        NULL,  /* Task input parameter */
-        tskIDLE_PRIORITY + 1, // configMAX_PRIORITIES - 1,  /* Priority of the task */
-        &renderTaskHandle,  /* Task handle. */
-        1); /* Core where the task should run */
+    // renderDisplay();
+    // displayState[0] = 0xFF;
+    // selectDigitForRender(0);
+    // renderToDigit(displayState[0]);
+
+    // xTaskCreatePinnedToCore(
+    //     renderLoop, /* Function to implement the task */
+    //     "renderLoop", /* Name of the task */
+    //     10000,  /* Stack size in words */
+    //     NULL,  /* Task input parameter */
+    //     0,  /* Priority of the task */
+    //     &renderTaskHandle,  /* Task handle. */
+    //     0); /* Core where the task should run */
 }
 
 // Display an ASCII character on a given digit, optionally lighting up the colon light too.
@@ -201,4 +194,65 @@ void clearDisplay() {
         updateDigit(i, ' ');
     }
     xSemaphoreGiveRecursive(displayStateMutexHandle);
+}
+
+void setup() {
+    displayStateMutexHandle = xSemaphoreCreateMutexStatic(&displayStateMutex);
+
+    Serial.begin(115200);
+    Serial.println("setup");
+
+    pinMode(srDataPin, OUTPUT);
+    pinMode(srStorageClockPin, OUTPUT);
+    pinMode(srShiftClockPin, OUTPUT);
+    pinMode(addrBitMap[0], OUTPUT);
+    pinMode(addrBitMap[1], OUTPUT);
+    pinMode(addrBitMap[2], OUTPUT);
+    pinMode(addrBitMap[3], OUTPUT);
+
+    
+    digitalWrite(srDataPin, HIGH);
+    digitalWrite(srStorageClockPin, HIGH);
+    digitalWrite(srShiftClockPin, HIGH);
+    digitalWrite(addrBitMap[0], LOW);
+    digitalWrite(addrBitMap[1], LOW);
+    digitalWrite(addrBitMap[2], LOW);
+    digitalWrite(addrBitMap[3], LOW);
+
+    selectDigitForRender(0);
+    renderToDigit(0b01010101);
+
+//    renderToDigit(0b11001100);
+
+//    for (int i = 0; i < NUM_DIGITS; i++) {
+//        updateDigit(0, '0');
+//        // selectDigitForRender(i);
+//        // sleep(2000);
+//    }
+
+}
+
+void loop() {
+//  for (int i = 0; i < 10; i++) {
+//      selectDigitForRender(i);
+//      for (int i = 0; i < 8; i++) {
+//        renderToDigit(1 << i);
+//        delay(100);
+//    }
+//  }
+  for (int i = 0; i < 10; i++) {
+    delay(1000);
+    renderToDigit(segmentsForNumericChars[i]);
+  }
+//    for (int i = 0; i < NUM_DIGITS; i++) {
+//        selectDigitForRender(i);
+//        renderToDigit(1);
+//        delay(2000);
+//    }
+}
+
+void renderToDigit(uint8_t digitState) {
+    digitalWrite(srStorageClockPin, LOW);
+    shiftOut(srDataPin, srShiftClockPin, MSBFIRST, digitState);
+    digitalWrite(srStorageClockPin, HIGH);
 }
